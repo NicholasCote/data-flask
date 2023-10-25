@@ -2,9 +2,9 @@ FROM python:3.9
 
 RUN apt-get update
 
-RUN git clone https://github.com/NicholasCote/Stratus-Python.git
+RUN git clone https://github.com/NicholasCote/data-flask.git
 
-WORKDIR data-flask/app
+WORKDIR data-flask
 
 RUN pip install -r requirements.txt
 
