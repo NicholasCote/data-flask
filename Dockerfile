@@ -1,7 +1,5 @@
 FROM python:3.9
 
-RUN apt-get update
-
 RUN git clone https://github.com/NicholasCote/data-flask.git
 
 WORKDIR data-flask
