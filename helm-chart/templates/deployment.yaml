@@ -17,16 +17,16 @@ spec:
         app: {{ .Values.webapp.name }}
     spec:
       volumes:
-        - name: {{ .Values.volume1.name }}
+        - name: {{ .Values.webapp.volume1.name }}
           nfs:
-            server: {{ .Values.volume1.server }}
-            path: {{ .Values.volume1.path }}
-            readOnly: {{ .Values.volume1.ro }}
-        - name: {{ .Values.volume2.name }}
+            server: {{ .Values.webapp.volume1.server }}
+            path: {{ .Values.webapp.volume1.path }}
+            readOnly: {{ .Values.webapp.volume1.ro }}
+        - name: {{ .Values.webapp.volume2.name }}
           nfs:
-            server: {{ .Values.volume2.server }}
-            path: {{ .Values.volume2.path }}
-            readOnly: {{ .Values.volume2.ro }}
+            server: {{ .Values.webapp.volume2.server }}
+            path: {{ .Values.webapp.volume2.path }}
+            readOnly: {{ .Values.webapp.volume2.ro }}
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
@@ -38,6 +38,6 @@ spec:
         - containerPort: {{ .Values.webapp.container.port }}
         volumeMounts:
         - mountPath: /glade/collections
-          name: {{ .Values.volume1.name }}
+          name: {{ .Values.webapp.volume1.name }}
         - mountPath: /glade/campaign
-          name: {{ .Values.volume2.name }}
+          name: {{ .Values.webapp.volume2.name }}
