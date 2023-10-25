@@ -4,7 +4,7 @@ RUN apt-get update
 
 RUN git clone https://github.com/NicholasCote/Stratus-Python.git
 
-WORKDIR data-flask/data-flask
+WORKDIR data-flask/app
 
 RUN pip install -r requirements.txt
 
