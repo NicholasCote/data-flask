@@ -33,7 +33,7 @@ Session(app)
 
 SWAGGER_URL = '/api/docs'
 API_URL = 'https://ncote-test.k8s.ucar.edu/v1/swagger.json'
-##API_URL = 'http://localhost:8000/v1/swagger.json'
+#API_URL = 'http://localhost:8000/v1/swagger.json'
 
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
