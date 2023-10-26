@@ -1,6 +1,9 @@
 name: Data Flask CICD Pipeline
 
-on: push
+on: 
+  push:
+    paths:
+      - flask-code/**
 
 jobs:
   docker-stuff:
@@ -28,3 +31,9 @@ jobs:
           # Provide the tags to apply to the image, this example uses the latest image tag 
           tags: |
             ncote/data-flask:${{ steps.date.outputs.date }}
+      - name: Update Helm values.yaml
+        run: |
+          sed -i '/ncote/data-flask:/c\    image: ncote/data-flask:${{ steps.date.outputs.date }}' /helm-chart/values.yaml
+      - name: Update Helm Chart.yaml
+        run: |
+          sed -i '/appVersion:/c\appVersion: ${{ steps.date.outputs.date }}' /helm-chart/Chart.yaml
