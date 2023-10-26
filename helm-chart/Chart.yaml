@@ -1,6 +1,6 @@
 apiVersion: v2
-name: web-app
-description: A Helm chart for Kubernetes
+name: ncote-test
+description: A Helm chart for Nick to deploy test instances to Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #
