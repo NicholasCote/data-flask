@@ -18,7 +18,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN  }}
       - name: Get current date
         id: date
-        run: echo "date=$(date +'%Y-%m-%d.%H')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -36,7 +36,7 @@ jobs:
           sed -i "/data-flask/ c\    image: ncote/data-flask:'${{ steps.date.outputs.date }}'" helm-chart/values.yaml
       - name: Update Helm Chart.yaml
         run: |
-          sed -i "/appVersion:/ c\appVersion: '${{ steps.date.outputs.date }}'" helm-chart/Chart.yaml
+          sed -i "/appVersion:/ c\appVersion: ${{ steps.date.outputs.date }}" helm-chart/Chart.yaml
       - name: Run python script to update version by 1
         run: python update_ver.py
       - name: Push changes to GitHub
