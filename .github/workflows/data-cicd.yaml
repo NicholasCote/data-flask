@@ -33,7 +33,7 @@ jobs:
             ncote/data-flask:${{ steps.date.outputs.date }}
       - name: Update Helm values.yaml
         run: |
-          sed -i "/data-flask/ c\    image: ncote/data-flask:'${{ steps.date.outputs.date }}'" helm-chart/values.yaml
+          sed -i "/data-flask/ c\    image: ncote/data-flask:${{ steps.date.outputs.date }}" helm-chart/values.yaml
       - name: Update Helm Chart.yaml
         run: |
           sed -i "/appVersion:/ c\appVersion: ${{ steps.date.outputs.date }}" helm-chart/Chart.yaml
