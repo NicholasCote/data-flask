@@ -31,3 +31,18 @@ jobs:
           # Provide the tags to apply to the image, this example uses the latest image tag 
           tags: |
             ncote/data-flask:${{ steps.date.outputs.date }}
+      - name: Update Helm values.yaml
+        run: |
+          sed -i "/data-flask/ c\    image: ncote/data-flask:${{ steps.date.outputs.date }}" helm-chart/values.yaml
+      - name: Update Helm Chart.yaml
+        run: |
+          sed -i "/appVersion:/ c\appVersion: ${{ steps.date.outputs.date }}" helm-chart/Chart.yaml
+      - name: Run python script to update version by 1
+        run: python update_ver.py
+      - name: Push changes to GitHub
+        run: |
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+          git commit -a -m "Update Helm chart via GH Actions"
+          git push
+
