@@ -1,12 +1,12 @@
 replicaCount: 1
 
 webapp:
-  name: ncar-viz-test
-  group: ncar-viz-test
+  name: ncote
+  group: ncote
   path: /
   tls:
     fqdn: ncote.k8s.ucar.edu
-    secretName: incommon-account-key
+    secretName: incommon-key-ncote
   volume1:
     name: collections
     server: gladedm1.ucar.edu
