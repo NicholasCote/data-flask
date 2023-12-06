@@ -5,7 +5,7 @@ webapp:
   group: ncar-viz-test
   path: /
   tls:
-    fqdn: ncote-test.k8s.ucar.edu
+    fqdn: ncote.k8s.ucar.edu
     secretName: incommon-account-key
   volume1:
     name: collections
@@ -18,7 +18,7 @@ webapp:
     path: /gpfs/csfs1
     readOnly: true
   container: 
-    image: ncote/data-flask-dev:2023-12-06.19.21
+    image: ncote/data-flask:2023-12-06.19.07
     port: 5000
     memory: 1G
     cpu: 2
