@@ -1,4 +1,4 @@
-name: Data Flask DEV CICD Pipeline
+name: Data Flask CICD Pipeline
 
 on: 
   push:
@@ -33,10 +33,10 @@ jobs:
           push: true
           # Provide the tags to apply to the image, this example uses the latest image tag 
           tags: |
-            ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}
+            ncote/data-flask:${{ steps.date.outputs.date }}
       - name: Update Helm values.yaml
         run: |
-          sed -i "/data-flask/ c\    image: ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}" helm-chart/values.yaml
+          sed -i "/data-flask/ c\    image: ncote/data-flask:${{ steps.date.outputs.date }}" helm-chart/values.yaml
       - name: Update Helm Chart.yaml
         run: |
           sed -i "/appVersion:/ c\appVersion: ${{ steps.date.outputs.date }}" helm-chart/Chart.yaml
