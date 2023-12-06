@@ -5,7 +5,7 @@ webapp:
   group: ncar-viz-test
   path: /
   tls:
-    fqdn: ncote-test.k8s.ucar.edu
+    fqdn: ncote.k8s.ucar.edu
     secretName: incommon-account-key
   volume1:
     name: collections
