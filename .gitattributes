@@ -1,3 +1,0 @@
-helm-chart/values.yaml merge=ours
-helm-chart/Chart.yaml merge=ours
-.github/* merge=ours

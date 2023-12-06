@@ -1,6 +1,6 @@
 import fileinput
 
-with open(r'helm-chart/Chart.yaml', 'r') as chart:
+with open(r'Charts/helm-chart/Chart.yaml', 'r') as chart:
     data = chart.readlines()
     num = -1
     for line in data:
@@ -14,5 +14,5 @@ with open(r'helm-chart/Chart.yaml', 'r') as chart:
             new_ver = new_ver + '\n'
             data[num] = line.replace(version, new_ver)
 
-with open('helm-chart/Chart.yaml', 'w') as chart:
+with open('Charts/helm-chart/Chart.yaml', 'w') as chart:
     chart.write(''.join(data))
