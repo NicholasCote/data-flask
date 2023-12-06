@@ -18,7 +18,7 @@ webapp:
     path: /gpfs/csfs1
     readOnly: true
   container: 
-    image: ncote/data-flask-dev:2023-12-06.22.27
+    image: ncote/data-flask-dev:2023-12-06.23.07
     port: 5000
     memory: 1G
     cpu: 2
