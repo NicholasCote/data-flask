@@ -32,7 +32,7 @@ jobs:
           # Provide the current directory as build context 
           context: .
           # Specify where the Dockerfile is located in relation to the repo base path
-          file: Dockerfile
+          file: TestDockerfile
           # Enable the push to docker hub
           push: true
           # Provide the tags to apply to the image, this example uses the latest image tag 
