@@ -15,7 +15,7 @@ img.logo {
     display: flex !important;
     text-transform: uppercase;
     font-weight: 700;
-    height: 60px !important;
+    height: 120px !important;
     justify-content: center !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
