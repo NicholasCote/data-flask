@@ -39,18 +39,9 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:unstable.list > /dev/null \
           && sudo apt-get update -y \
           && sudo apt-get install -y podman skopeo
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          # Provide the current directory as build context 
-          context: .
-          # Specify where the Dockerfile is located in relation to the repo base path
-          file: TestDockerfile
-          # Enable the push to docker hub
-          push: true
-          # Provide the tags to apply to the image, this example uses the latest image tag 
-          tags: |
-            ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}
+      - name: Build Podman image
+        run: |
+          podman build -t ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }} .
       - name: Update Helm values.yaml
         run: |
           sed -i "/data-flask/ c\    image: ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}" Charts/test-helm-chart/values.yaml
