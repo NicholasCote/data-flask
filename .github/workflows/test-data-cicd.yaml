@@ -42,6 +42,9 @@ jobs:
       - name: Build Podman image
         run: |
           podman build -t ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }} .
+      - name: Push Podman image to Docker hub
+        run: |
+          podman push ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}
       - name: Update Helm values.yaml
         run: |
           sed -i "/data-flask/ c\    image: ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}" Charts/test-helm-chart/values.yaml
