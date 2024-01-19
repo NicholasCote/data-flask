@@ -28,7 +28,7 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
       - name: Install Podman
         run: |
-          apt-get -y install podman
+          sudo apt-get -y install podman
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
