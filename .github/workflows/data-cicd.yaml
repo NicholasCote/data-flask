@@ -25,6 +25,7 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
       - name: Install Podman
         run: |
+<<<<<<< HEAD
           sudo apt-get remove -y golang-github-containers-image \
           && sudo mkdir -p /etc/apt/keyrings \
           && curl -fsSL https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/unstable/xUbuntu_$(lsb_release -rs)/Release.key \
@@ -42,6 +43,21 @@ jobs:
       - name: Push Podman image to Docker hub
         run: |
           podman push ncote/data-flask:${{ steps.date.outputs.date }}
+=======
+          apt-get -y install podman
+      - name: Build and push Podman image
+        uses: docker/build-push-action@v4
+        with:
+          # Provide the current directory as build context 
+          context: .
+          # Specify where the Dockerfile is located in relation to the repo base path
+          file: Dockerfile
+          # Enable the push to docker hub
+          push: true
+          # Provide the tags to apply to the image, this example uses the latest image tag 
+          tags: |
+            ncote/data-flask:${{ steps.date.outputs.date }}
+>>>>>>> ca2ae1e (Install podman)
       - name: Update Helm values.yaml
         run: |
           sed -i "/data-flask/ c\    image: hub.k8s.ucar.edu/docker/ncote/data-flask:${{ steps.date.outputs.date }}" Charts/helm-chart/values.yaml
