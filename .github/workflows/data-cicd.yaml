@@ -50,4 +50,5 @@ jobs:
           git config --global user.name "GitHub Actions"
           git commit -a -m "Update Helm chart via GH Actions"
           git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+          git push origin dev
 
