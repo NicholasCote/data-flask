@@ -11,7 +11,7 @@ env:
   GITHUB_BRANCH: ${{ github.ref_name }}
 
 jobs:
-  docker-stuff:
+  podman-build-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo 
@@ -47,7 +47,7 @@ jobs:
           podman push ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}
       - name: Update Helm values.yaml
         run: |
-          sed -i "/data-flask/ c\    image: ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}" Charts/test-helm-chart/values.yaml
+          sed -i "/data-flask/ c\    image: hub.k8s.ucar.edu/docker/ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}" Charts/test-helm-chart/values.yaml
       - name: Update Helm Chart.yaml
         run: |
           sed -i "/appVersion:/ c\appVersion: ${{ steps.date.outputs.date }}" Charts/test-helm-chart/Chart.yaml
