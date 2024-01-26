@@ -52,5 +52,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git commit -a -m "Update Helm chart via GH Actions"
           git push origin dev
-          git pr create --base main --head dev --title "GitHub Actions PR" --body "CICD workflow to update main Helm chart with new image"
-          
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: dev-promotion
