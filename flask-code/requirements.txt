@@ -8,3 +8,4 @@ xarray
 numpy
 matplotlib
 distributed
+netcdf4
