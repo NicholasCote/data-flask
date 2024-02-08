@@ -4,3 +4,6 @@ celery
 flask_restful
 boto3
 requests
+xarray
+numpy
+matplotlib
