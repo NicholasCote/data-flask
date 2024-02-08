@@ -87,52 +87,6 @@ def get_glade_picture():
         ax.set_ylabel('Miles Per Hour')
         return fig
 
-    # This bash-style pattern will match data for March, April, and May of 2022.
-    year_month_pattern = '2022{03,04,05}/'
-
-    data_spec = data_dir + year_month_pattern
-
-    # These filename patterns refer to u- and v-components of winds at 10 meters above the land surface.
-    filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
-    filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'
-
-    # Choose between loading data in GRIB or NetCDF format.  
-    USE_GRIB = True    
-
-    ds_u = get_dataset(data_spec + filename_pattern_u, USE_GRIB, parallel=False)
-    ds_v = get_dataset(data_spec + filename_pattern_v, USE_GRIB, parallel=False)
-
-    # Assign the correct variable names depending on the dataset format.
-    if USE_GRIB:
-        var_u = 'u10n'
-        var_v = 'v10n'
-    else:
-        var_u = 'U10N'
-        var_v = 'V10N'
-
-    # Select data for a specific geographic location (Cheyenne, Wyoming).
-    # Note that dataset longitude values are in the range [0, 360]; click the disk icon to the right of 
-    #   "longitude" above to verify.
-    # We convert from longitude values provided by Google in the range [-180, 180] using subtraction.
-
-    # A couple of cities to choose from
-    cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
-    boulder =  {'lat': 40.01, 'lon': 360 - 105.27}
-
-    city = cheyenne
-
-    # Select the nearest grid cell to our lat/lon location.
-    u = get_point_array(ds_u, city['lat'], city['lon'], var_u)
-    v = get_point_array(ds_v, city['lat'], city['lon'], var_v)
-
-    # Actually load the data into memory.
-    u_values = u.values
-    v_values = v.values
-
-    figure = plot_winds(u_values, v_values, ds_u.time)
-
-    plt.show()
-
     USE_PBS_SCHEDULER = False
 
     USE_DASK_GATEWAY = False
@@ -198,7 +152,7 @@ def get_glade_picture():
     # This bash-style pattern will match data for 2021 and 2022.
     year_month_pattern = '202{1,2}*/'
 
-    data_dir = data_dir + year_month_pattern
+    data_spec = data_dir + year_month_pattern
 
     # These filename patterns refer to u- and v-components of winds at 10 meters above the land surface.
     filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
