@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <title>Home | NCAR Stratus UI</title>
+        <link rel="canonical" href="{{ url_for('home') }}"/>
+        <meta property="og:title" content="Home | NCAR Stratus UI"/>
+        <meta property="og:url" content="{{ url_for('home') }}"/>
+        <meta property="og:site_name" content="ncar_stratus_ui"/>
+        <meta property="og:type" content="website"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static',  filename='style.css')}}" type="text/css">
+    <script src="{{url_for('static',  filename='app.js')}}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script>
+        $(function(){
+            $('#nav').load("{{ url_for('navbar') }}")
+        })
+    </script>
+    <body>
+        <div id="nav"></div>
+        <br>
+        <img src="{{ image }}"/>
+    </body>
+</html>
