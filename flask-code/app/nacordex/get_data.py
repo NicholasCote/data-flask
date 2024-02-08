@@ -198,4 +198,4 @@ def get_glade_picture():
 
     cluster.close()
 
-    return plotfile
+    return '/static/glade_data_access.png'
