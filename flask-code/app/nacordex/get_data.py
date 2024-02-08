@@ -192,7 +192,7 @@ def get_glade_picture():
 
     figure = plot_winds(u_values, v_values, ds_u.time)
 
-    plotfile = f'./glade_data_access.png'
+    plotfile = 'glade_data_access.png'
     figure.savefig(plotfile, dpi=100)
 
     cluster.close()
