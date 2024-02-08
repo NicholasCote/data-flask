@@ -2,7 +2,7 @@ from flask import render_template, request, session, redirect, url_for
 from app import app, api
 from app.main.stratus_py import list_all_buckets, list_bucket_objs, user_download_fileobj
 from app.celery_setup.tasks import download_object
-from app.main.nacordex.get_data import get_glade_picture
+from app.nacordex.get_data import get_glade_picture
 import os
 
 @app.route('/')
