@@ -1,8 +1,8 @@
 replicaCount: 1
 
 webapp:
-  name: ncar-viz-test
-  group: ncar-viz-test
+  name: ncote-test-app
+  group: ncote-test-app
   path: /
   tls:
     fqdn: ncote-test.k8s.ucar.edu

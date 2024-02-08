@@ -1,8 +1,8 @@
 replicaCount: 1
 
 webapp:
-  name: ncote
-  group: ncote
+  name: ncote-app
+  group: ncote-app
   path: /
   tls:
     fqdn: ncote.k8s.ucar.edu
