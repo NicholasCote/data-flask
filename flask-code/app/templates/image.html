@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-    <title>Home | NSF NCAR Stratus & GLADE UI</title>
+    <title>View Image | NSF NCAR Stratus & GLADE UI</title>
         <link rel="canonical" href="{{ url_for('home') }}"/>
         <meta property="og:title" content="Home | NCAR Stratus UI"/>
         <meta property="og:url" content="{{ url_for('home') }}"/>
@@ -21,6 +21,6 @@
     <body>
         <div id="nav"></div>
         <br>
-        <img src="{{ image | safe }}"/>
+        <img src="{{ image | safe }}" class="center">
     </body>
 </html>

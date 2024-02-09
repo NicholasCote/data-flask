@@ -22,7 +22,7 @@
         <div id="nav"></div>
         <br>
             <h1>Blue/Green Demo</h1>
-            <h2>Stratus & GLADE file browser</h2>
+            <h2>Stratus & GLADE</h2>
             {% if session['secret_key'] is defined %}
             <div class="bubble">
                 <h3>Logged in under Access ID:</h3>
@@ -47,8 +47,9 @@
                     </form>
             </div>
             {% endif %}
-            <a href="{{ url_for('glade_image') }}">View an image created from GLADE data</a><br>
+            <a href="{{ url_for('glade_image') }}", class="center">View an image created dynamically from GLADE data</a><br>
             <hr class="new">
+            {% if session['secret_key']  is defined %}
             <div class="row">
                 <div class="bubble">
                     <h2>List all Stratus Buckets</h2>
@@ -66,6 +67,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
             <hr class="new">
             {% if session['secret_key']  is defined %}
             <div class="row">
