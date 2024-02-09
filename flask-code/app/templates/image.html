@@ -148,8 +148,8 @@
                 filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
                 filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
 
-                ds_u = get_dataset(data_spec + filename_pattern_u, USE_GRIB, parallel=True)
-                ds_v = get_dataset(data_spec + filename_pattern_v, USE_GRIB, parallel=True)
+                ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=True)
+                ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=True)
 
                 var_u = 'U10N'
                 var_v = 'V10N'
