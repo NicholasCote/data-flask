@@ -7,21 +7,7 @@ import os
 
 @app.route('/')
 def home():
-    try:
-        og_dir = 'glade'
-        glade = os.listdir('/glade')
-        return render_template('home.html', glade=glade, og_dir=og_dir)
-    except:
-        return render_template('home.html', glade=['No GLADE mount present'])
-    
-@app.route('/listdir/<og_dir>/<dir>')
-def list_dir(dir, og_dir):
-    try:
-        og_dir = og_dir + '-' + dir
-        glade = os.listdir('/' + og_dir.replace('-','/'))
-        return render_template('home.html', glade=glade, og_dir=og_dir)
-    except:
-        return render_template('home.html')
+    return render_template('home.html')
 
 @app.route('/templates/header.html')
 def header():
@@ -66,34 +52,6 @@ def stratus_list_all_bucket_objs():
         bucket_name = request.args.get('bucket_name')
         bucket_objs = list_bucket_objs(session['endpoint'], bucket_name, session['access_id'], session['secret_key'])
         return render_template('home.html', glade=['No GLADE mount present'], bucket_objs = bucket_objs, bucket_name = bucket_name)
-
-@app.route('/stratus/download/<bucket_name>', methods=['GET', 'POST'])
-def stratus_download(bucket_name):
-    if request.method == 'POST':
-        selected_list = request.form.getlist('selected_object')
-        for object in selected_list:
-             download_object.delay(session['endpoint'], object, bucket_name, session['access_id'], session['secret_key'])
-        return render_template('home.html')
-    else:
-        bucket_objs = list_bucket_objs(session['endpoint'], bucket_name, session['access_id'], session['secret_key'])
-        return render_template('download.html', bucket_objs = bucket_objs, bucket_name = bucket_name)
-    
-@app.route('/stratus/download/<bucket_name>/<object>')
-def object_download(bucket_name, object):
-    return user_download_fileobj(session['endpoint'], object, bucket_name, session['access_id'], session['secret_key'])
-
-@app.route('/stratus/download/<bucket_name>/filter', methods=['GET', 'POST'])
-def stratus_download_filter(bucket_name):
-    if request.method == 'POST':
-        return render_template('home.html')
-    else:
-        filter = request.args.get('filter')
-        bucket_objs = list_bucket_objs(session['endpoint'], bucket_name, session['access_id'], session['secret_key'])
-        filtered = []
-        for obj in bucket_objs:
-            if filter in obj:
-                filtered.append(obj)
-        return render_template('download.html', bucket_objs = filtered, bucket_name = bucket_name)
     
 @app.route('/glade/picture')
 def glade_image():

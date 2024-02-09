@@ -50,32 +50,20 @@
             <a href="{{ url_for('glade_image') }}">View an image created from GLADE data</a><br>
             <hr class="new">
             <div class="row">
-                <div class="column">
-                    <div class="bubble">
-                        <h2>GLADE Directories</h2>
-                        {% for dir in glade %}
-                            <a href="{{ url_for('list_dir', dir=dir, og_dir=og_dir) }}">{{ dir }}</a><br>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="column">
-                {% if session['secret_key'] is defined %}
-                    <div class="bubble">
-                        <h2>List all Stratus Buckets</h2>
-                        {% if buckets is defined %}
-                            <div class="bubble">
-                                <h3>Buckets in Stratus:</h3>
-                                {% for bucket in buckets %}
-                                    <strong>{{ bucket }}</strong> <br>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                        <form action="/stratus/list_all" method="get">
-                            <input type="submit" value="List All Buckets">
-                        </form>
-                        {% endif %}
-                    </div>
-                {% endif %}
+                <div class="bubble">
+                    <h2>List all Stratus Buckets</h2>
+                    {% if buckets is defined %}
+                        <div class="bubble">
+                            <h3>Buckets in Stratus:</h3>
+                            {% for bucket in buckets %}
+                                <strong>{{ bucket }}</strong> <br>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                    <form action="/stratus/list_all" method="get">
+                        <input type="submit" value="List All Buckets">
+                    </form>
+                    {% endif %}
                 </div>
             </div>
             <hr class="new">
