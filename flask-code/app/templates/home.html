@@ -47,9 +47,12 @@
                     </form>
             </div>
             {% endif %}
-            <a href="{{ url_for('glade_image') }}", class="center">View an image created dynamically from GLADE data</a><br>
-            <hr class="new">
+            <br>
+            <div class="bubble">
+                <a href="{{ url_for('glade_image') }}", class="center">View an image created dynamically from GLADE data</a><br>
+            </div>
             {% if session['secret_key']  is defined %}
+            <hr class="new">
             <div class="row">
                 <div class="bubble">
                     <h2>List all Stratus Buckets</h2>
@@ -68,8 +71,8 @@
                 </div>
             </div>
             {% endif %}
-            <hr class="new">
             {% if session['secret_key']  is defined %}
+            <hr class="new">
             <div class="row">
                 <div class="column">
                 </div>
