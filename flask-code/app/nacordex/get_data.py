@@ -87,35 +87,7 @@ def get_glade_picture():
         ax.set_ylabel('Miles Per Hour')
         return fig
 
-    USE_PBS_SCHEDULER = False
-
-    USE_DASK_GATEWAY = False
-
     MAX_WORKERS = 4
-
-    def get_gateway_cluster():
-        """ Create cluster through dask_gateway
-        """
-        from dask_gateway import Gateway
-
-        gateway = Gateway()
-        cluster = gateway.new_cluster()
-        cluster.adapt(minimum=2, maximum=MAX_WORKERS)
-        return cluster
-
-    def get_pbs_cluster():
-        """ Create cluster through dask_jobqueue.   
-        """
-        from dask_jobqueue import PBSCluster
-        
-        num_jobs = MAX_WORKERS
-        walltime = '0:10:00'
-        memory = '4GB' 
-
-        cluster = PBSCluster(cores=1, processes=1, walltime=walltime, memory=memory, queue='casper', 
-                            resource_spec=f"select=1:ncpus=1:mem={memory}",)
-        cluster.scale(jobs=num_jobs)
-        return cluster
 
     def get_local_cluster():
         """ Create cluster using the Jupyter server's resources
@@ -128,12 +100,7 @@ def get_glade_picture():
 
     # Obtain dask cluster in one of three ways
 
-    if USE_PBS_SCHEDULER:
-        cluster = get_pbs_cluster()
-    elif USE_DASK_GATEWAY:
-        cluster = get_gateway_cluster()
-    else:
-        cluster = get_local_cluster()
+    cluster = get_local_cluster()
 
     # Connect to cluster
     from distributed import Client
@@ -142,9 +109,6 @@ def get_glade_picture():
     # Pause notebook execution until some workers have been allocated.
     min_workers = 2
     client.wait_for_workers(min_workers)
-
-    # Display cluster dashboard URL
-    cluster
 
     # This subdirectory contains surface analysis data on a 0.25 degree global grid
     data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
@@ -156,21 +120,13 @@ def get_glade_picture():
 
     # These filename patterns refer to u- and v-components of winds at 10 meters above the land surface.
     filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
-    filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'
-
-    # Choose between loading data in GRIB or NetCDF format.  
-    USE_GRIB = False    
+    filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
 
     ds_u = get_dataset(data_spec + filename_pattern_u, USE_GRIB, parallel=True)
     ds_v = get_dataset(data_spec + filename_pattern_v, USE_GRIB, parallel=True)
 
-    # Assign the correct variable names depending on the dataset format.
-    if USE_GRIB:
-        var_u = 'u10n'
-        var_v = 'v10n'
-    else:
-        var_u = 'U10N'
-        var_v = 'V10N'
+    var_u = 'U10N'
+    var_v = 'V10N'
 
     # Select data for a specific geographic location (Cheyenne, Wyoming).
     # Note that dataset longitude values are in the range [0, 360]; click the disk icon to the right of 
@@ -178,7 +134,6 @@ def get_glade_picture():
     # We convert from longitude values provided by Google in the range [-180, 180] using subtraction.
 
     cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
-    boulder =  {'lat': 40.01, 'lon': 360 - 105.27}
 
     city = cheyenne
 
