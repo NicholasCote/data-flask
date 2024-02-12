@@ -1,8 +1,8 @@
 replicaCount: 1
 
 webapp:
-  name: ncar-viz-test
-  group: ncar-viz-test
+  name: ncote-test-app
+  group: ncote-test-app
   path: /
   tls:
     fqdn: ncote-test.k8s.ucar.edu
@@ -18,7 +18,7 @@ webapp:
     path: /gpfs/csfs1
     readOnly: true
   container: 
-    image: hub.k8s.ucar.edu/docker/ncote/data-flask-dev:2024-01-26.20.51
+    image: hub.k8s.ucar.edu/docker/ncote/data-flask-dev:2024-02-09.21.42
     port: 5000
-    memory: 1G
+    memory: 4G
     cpu: 2

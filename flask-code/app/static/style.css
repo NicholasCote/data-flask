@@ -5,7 +5,7 @@
 /* The top level navbar */
 
 img.logo {
-    height: 90% !important;
+    height: 100px !important;
     width: auto;
     margin-top: 2px !important;
     left: 25% !important;
@@ -86,14 +86,6 @@ hr.new {
         width: 40% !important;
         height: auto;
     }
-}
-
-.btn-jupyter {
-    background-color: #f37524 !important;
-    display: inline-block;
-    color: #ffffff !important;
-    font-family: 'Poppins', Arial, sans-serif !important;
-    font-size: 16px !important;
 }
 
 /* Dropdown buttons inside the navbar */
@@ -253,7 +245,6 @@ h4 {
     padding: 10px 0px;
 }
 
-
 .down-bubble {
     background-color: #ffffff;
     border-radius: 8px;
@@ -275,7 +266,13 @@ h4 {
     width: 80%;
 }
 
-.download-list {
-    text-align: left;
-    padding-left: 12px;
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+  }
+
+code {
+    white-space: pre;
 }
