@@ -8,11 +8,6 @@ webapp:
     fqdn: ncote.k8s.ucar.edu
     secretName: incommon-key-ncote
   volume1:
-    name: collections
-    server: gladedm1.ucar.edu
-    path: /gpfs/fs1/collections
-    readOnly: true
-  volume2:
     name: campaign
     server: gladedm1.ucar.edu
     path: /gpfs/csfs1
