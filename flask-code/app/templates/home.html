@@ -22,88 +22,16 @@
         <div id="nav"></div>
         <br>
             <h1>Blue/Green Demo</h1>
-            <h2>Stratus & GLADE</h2>
-            {% if session['secret_key'] is defined %}
-            <div class="bubble">
-                <h3>Logged in under Access ID:</h3>
-                    <strong>{{ session['access_id'] }}</strong>
-                <div class="sideby">
-                    <form action="/stratus/logout" method="post">
-                        <input type="submit" value="Logout">
-                    </form> <br>
-                    <form action="/" method="get">
-                        <input type="submit" value="Home">
-                    </form>
+            <div class="bigbubble">
+                <h2>Toolbox</h2>
+                <div class="text-center">
+                <a href="{{ url_for('add_gh') }}">Add a GitHub actions workflow and Helm chart to your repository</a>
+                <hr class="new">
+                <a href="{{ url_for('object_browser') }}">Use an object storage browser to explore the contents of S3 buckets</a>
+                <hr class="new">
+                <a href="{{ url_for('glade_image') }}">View an image created dynamically from GLADE data</a>
                 </div>
+                <br>
             </div>
-            {% else%}
-            <div class="bubble">
-                    <h2>S3 Login</h2>
-                    <form action="/stratus/login" method="post">
-                        Endpoint URL:  <input type="text" id="endpoint" name="endpoint" placeholder="https://s3.amazonaws.com" required><br><br>
-                        Access ID : <input type="text" id="access_id" name="access_id" placeholder="Access ID" required><br><br>
-                        Secret Key : <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key" required><br><br>
-                        <input type="submit" value="Login">
-                    </form>
-            </div>
-            {% endif %}
-            <br>
-            <div class="bubble">
-                <a href="{{ url_for('glade_image') }}", class="center">View an image created dynamically from GLADE data</a><br>
-            </div>
-            {% if session['secret_key']  is defined %}
-            <hr class="new">
-            <div class="row">
-                <div class="bubble">
-                    <h2>List all Stratus Buckets</h2>
-                    {% if buckets is defined %}
-                        <div class="bubble">
-                            <h3>Buckets in Stratus:</h3>
-                            {% for bucket in buckets %}
-                                <strong>{{ bucket }}</strong> <br>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                    <form action="/stratus/list_all" method="get">
-                        <input type="submit" value="List All Buckets">
-                    </form>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-            {% if session['secret_key']  is defined %}
-            <hr class="new">
-            <div class="row">
-                <div class="column">
-                </div>
-                <div class="column">
-                    <div class="bubble">
-                        <h2>List all Stratus Objects in Buckets</h2>
-                        <form action="/stratus/list_bucket_objs" method="get">
-                            Bucket Name : <input type="text" id="bucket_name" name="bucket_name" placeholder="cisl-cloud-users" required><br><br>
-                            <input type="submit" value="List All Objects">
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="column">
-                </div>
-                <div class="column">
-                {% if bucket_objs is defined %}
-                <div class="bubble">
-                    <form action="/stratus/download/{{ bucket_name }}" method="get">
-                        <input type="submit" value="Filter & Download">
-                    </form>
-                    <div class="bubble">
-                        {% for bucket_obj in bucket_objs %}
-                            <strong>{{ bucket_obj }}</strong> <br>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                </div>
-            </div>
-            {% endif %}
     </body>
 </html>

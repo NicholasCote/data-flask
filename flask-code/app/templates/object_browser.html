@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <title>Home | NSF NCAR Stratus & GLADE UI</title>
+        <link rel="canonical" href="{{ url_for('home') }}"/>
+        <meta property="og:title" content="Home | NCAR Stratus UI"/>
+        <meta property="og:url" content="{{ url_for('home') }}"/>
+        <meta property="og:site_name" content="ncar_stratus_ui"/>
+        <meta property="og:type" content="website"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static',  filename='style.css')}}" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="{{url_for('static',  filename='app.js')}}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/e08b5a6906.js" crossorigin="anonymous"></script>
+    <script>
+        $(function(){
+            $('#nav').load("{{ url_for('navbar') }}")
+        })
+    </script>
+    <body>
+        <div id="nav"></div>
+        <br>
+            <h1>Blue/Green Demo</h1>
+            <h2>Stratus & GLADE</h2>
+            {% if session['secret_key'] is defined %}
+            <div class="bubble">
+                <h2>Logged in under Access ID:</h2>
+                    <div class="text-center"><strong>{{ session['access_id'] }}</strong></div><br>
+                    <h2>
+                        <form action="/stratus/logout" method="post">
+                            <input type="submit" value="Logout">
+                        </form>
+                    </h2>
+                </div>
+            </div>
+            {% else%}
+            <div class="bubble">
+                    <h2>S3 Login</h2>
+                    <form action="/stratus/login" method="post"><br>
+                        Endpoint URL:  <input type="text" id="endpoint" name="endpoint" placeholder="https://s3.amazonaws.com" required><br><br>
+                        Access ID : <input type="text" id="access_id" name="access_id" placeholder="Access ID" required><br><br>
+                        Secret Key : <input type="password" id="secret_key" name="secret_key" placeholder="Secret Key" required><br><br>
+                        <input type="submit" value="Login">
+                    </form>
+                    <br>
+            </div>
+            {% endif %}
+            {% if session['secret_key']  is defined %}
+            <hr class="new">
+                <div class="bigbubble">
+                    <h2>List all Stratus Buckets</h2>
+                    {% if buckets is defined %}
+                    <div class="text-center">
+                        <h3>Buckets in Stratus:</h3>
+                            {% for bucket in buckets %}
+                                <strong>{{ bucket }}</strong> <br>
+                            {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <form action="/stratus/list_all" method="get">
+                            <input type="submit" value="List All Buckets">
+                        </form><br>
+                    </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if session['secret_key']  is defined %}
+            <hr class="new">
+                    <div class="bigbubble">
+                        <h2>List all Stratus Objects in Buckets</h2>
+                        <div class="text-center">
+                            <form action="/stratus/list_bucket_objs" method="get">
+                                Bucket Name : <input type="text" id="bucket_name" name="bucket_name" placeholder="cisl-cloud-users" required><br><br>
+                                <input type="submit" value="List All Objects">
+                            </form>
+                            <br>
+                        </div>
+                    </div>
+                {% if bucket_objs is defined %}
+                <div class="bigbubble">
+                    <div class="text-center">
+                    <form action="/stratus/download/{{ bucket_name }}" method="get">
+                        <input type="submit" value="Filter & Download">
+                    </form>
+                        {% for bucket_obj in bucket_objs %}
+                            <strong>{{ bucket_obj }}</strong> <br>
+                        {% endfor %}
+                        <br>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+            <hr class="new">
+            <div class="bubble">
+                <h2>
+                    <form action="/" method="get">
+                        <input type="submit" value="Home">
+                    </form>
+                </h2>
+            </div>
+    </body>
+</html>
