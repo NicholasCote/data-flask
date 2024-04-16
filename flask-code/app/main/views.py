@@ -1,5 +1,5 @@
 from flask import render_template, request, session, redirect, url_for
-from app import app
+from app import app, github
 from app.main.stratus_py import list_all_buckets, list_bucket_objs
 from app.nacordex.get_data import get_glade_picture
 from git import Repo
@@ -22,6 +22,27 @@ def header():
 @app.route('/templates/navbar.html')
 def navbar():
     return render_template('navbar.html')
+
+@app.route('/github/login')
+def github_login():
+    return github.authorize()
+
+@app.route('/github-callback')
+@github.authorized_handler
+def authorized(oauth_token):
+    next_url = request.args.get('next') or url_for('index')
+    if oauth_token is None:
+        flash("Authorization failed.")
+        return redirect(next_url)
+
+    user = User.query.filter_by(github_access_token=oauth_token).first()
+    if user is None:
+        user = User(oauth_token)
+        db_session.add(user)
+
+    user.github_access_token = oauth_token
+    db_session.commit()
+    return redirect(next_url)
 
 @app.route('/stratus/login', methods=['POST'])
 def stratus_login():
