@@ -5,16 +5,14 @@ from flask import Flask, url_for
 from flask_session import Session
 from flask_github import GitHub
 
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from flask_sqlalchemy import SQLAlchemy
 
 import os
 
 app = Flask(__name__)
 app.app_context().push()
 
-DATABASE_URI = 'sqlite:////tmp/github-flask.db'
+DATABASE_URI = 'sqlite:///github-flask.db'
 SECRET_FILE_PATH = Path(".flask_secret")
 try:
     with SECRET_FILE_PATH.open("r") as secret_file:
@@ -36,24 +34,17 @@ app.config['GITHUB_CLIENT_SECRET'] = os.environ['NCOTE_GITHUB_OAUTH_SECRET']
 
 github = GitHub(app)
 
-# setup sqlalchemy
-engine = create_engine(app.config['DATABASE_URI'])
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                         autoflush=False,
-                                         bind=engine))
-Base = declarative_base()
-Base.query = db_session.query_property()
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
+db = SQLAlchemy(app)
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
-    github_access_token = Column(String(255))
-    github_id = Column(Integer)
-    github_login = Column(String(255))
+    id = db.Column(db.Integer, primary_key=True)
+    github_access_token = db.Column(db.String(255))
+    github_id = db.Column(db.Integer)
+    github_login = db.Column(db.String(255))
 
     def __init__(self, github_access_token):
         self.github_access_token = github_access_token

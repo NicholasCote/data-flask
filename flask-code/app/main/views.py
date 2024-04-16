@@ -1,5 +1,5 @@
 from flask import render_template, request, session, redirect, url_for, flash
-from app import app, github, User, db_session
+from app import app, github, User, db
 from app.main.stratus_py import list_all_buckets, list_bucket_objs
 from app.nacordex.get_data import get_glade_picture
 from git import Repo
@@ -38,10 +38,10 @@ def authorized(oauth_token):
     user = User.query.filter_by(github_access_token=oauth_token).first()
     if user is None:
         user = User(oauth_token)
-        db_session.add(user)
+        db.add(user)
 
     user.github_access_token = oauth_token
-    db_session.commit()
+    db.commit()
     return redirect(next_url)
 
 @app.route('/stratus/login', methods=['POST'])
