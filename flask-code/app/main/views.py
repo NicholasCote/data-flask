@@ -35,7 +35,7 @@ def authorized(oauth_token):
         flash("Authorization failed.")
         return redirect(next_url)
 
-    user = db.session.query(User).filter(github_access_token=oauth_token).first()
+    user = db.session.query(User).filter(User.github_access_token == oauth_token).first()
     if user is None:
         user = User(oauth_token)
         db.add(user)
