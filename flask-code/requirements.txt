@@ -11,3 +11,4 @@ distributed
 netcdf4
 GitPython
 GitHub-Flask
+Flask-SQLAlchemy
