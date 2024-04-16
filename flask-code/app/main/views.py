@@ -38,10 +38,10 @@ def authorized(oauth_token):
     user = db.session.query(User).filter(User.github_access_token == oauth_token).first()
     if user is None:
         user = User(oauth_token)
-        db.add(user)
+        db.session.add(user)
 
     user.github_access_token = oauth_token
-    db.commit()
+    db.session.commit()
     return redirect(next_url)
 
 @app.route('/stratus/login', methods=['POST'])
