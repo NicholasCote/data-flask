@@ -38,6 +38,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 
 db = SQLAlchemy(app)
 
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
 class User(db.Model):
     __tablename__ = 'users'
 
