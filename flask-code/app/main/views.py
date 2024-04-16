@@ -30,12 +30,12 @@ def github_login():
 @app.route('/github-callback')
 @github.authorized_handler
 def authorized(oauth_token):
-    next_url = request.args.get('next') or url_for('home')
+    next_url = url_for('home')
     if oauth_token is None:
         flash("Authorization failed.")
         return redirect(next_url)
 
-    user = User.query.filter_by(github_access_token=oauth_token).first()
+    user = db.session.query(User).filter(github_access_token=oauth_token).first()
     if user is None:
         user = User(oauth_token)
         db.add(user)
