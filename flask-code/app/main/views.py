@@ -43,8 +43,8 @@ def authorized(oauth_token):
     user.github_access_token = oauth_token
     db.session.commit()
     session['github_access_token'] = oauth_token
-    session['github_username'] = jsonify(github.get('/user'))
-    print(session['github_username'])
+    #session['github_username'] = jsonify(github.get('/user'))
+    #print(session['github_username'])
     return redirect(next_url)
 
 @app.route('/stratus/login', methods=['POST'])
