@@ -29,25 +29,29 @@ def github_login():
 
 @app.route('/github-callback')
 @github.authorized_handler
-def authorized(oauth_token):
+def authorized(access_token):
     next_url = url_for('home')
-    if oauth_token is None:
+    if access_token is None:
         flash("Authorization failed.")
         return redirect(next_url)
 
-    user = db.session.query(User).filter(User.github_access_token == oauth_token).first()
+    user = db.session.query(User).filter(User.github_access_token == access_token).first()
     if user is None:
-        user = User(oauth_token)
+        user = User(access_token)
         db.session.add(user)
 
-    user.github_access_token = oauth_token
+    user.github_access_token = access_token
     github_user = github.get('/user')
     user.github_id = github_user['id']
     user.github_login = github_user['login']
     db.session.commit()
-    session['github_access_token'] = oauth_token
+    session['github_access_token'] = access_token
     session['github_username'] = user.github_login
     return redirect(next_url)
+
+@app.route('/user')
+def user():
+    return jsonify(github.get('/user'))
 
 @app.route('/stratus/login', methods=['POST'])
 def stratus_login():
