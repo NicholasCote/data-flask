@@ -41,12 +41,13 @@ def authorized(access_token):
         db.session.add(user)
 
     user.github_access_token = access_token
-    github_user = github.get('/user')
-    user.github_id = github_user['id']
-    user.github_login = github_user['login']
+    #github_user = github.get('/user')
+    #user.github_id = github_user['id']
+    #user.github_login = github_user['login']
     db.session.commit()
     session['github_access_token'] = access_token
-    session['github_username'] = user.github_login
+    #session['github_username'] = user.github_login
+    print(access_token)
     return redirect(next_url)
 
 @app.route('/user')
