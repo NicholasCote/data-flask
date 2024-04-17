@@ -24,6 +24,15 @@
             <h1>Blue/Green Demo</h1>
             <div class="bigbubble">
                 <h2>Toolbox</h2>
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <ul class=flashes>
+                        {% for message in messages %}
+                        <li>{{ message }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
                 <div class="text-center">
                 In order to add the files to your repository please use this <a href="{{ url_for('github_login') }}">link to login via GitHub</a>.<br>
                 <a href="{{ url_for('add_gh') }}">Add a GitHub actions workflow and Helm chart to your repository</a>

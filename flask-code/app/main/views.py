@@ -47,7 +47,7 @@ def authorized(access_token):
     db.session.commit()
     session['github_access_token'] = access_token
     #session['github_username'] = user.github_login
-    print(access_token)
+    flash(access_token)
     return redirect(next_url)
 
 @app.route('/user')
