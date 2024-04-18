@@ -1,7 +1,7 @@
 import secrets
 from pathlib import Path
 
-from flask import Flask, url_for
+from flask import Flask, url_for, g
 from flask_session import Session
 from flask_github import GitHub
 
@@ -40,6 +40,7 @@ db = SQLAlchemy(app)
 
 @app.before_request
 def create_tables():
+    g.user = None
     db.create_all()
 
 class User(db.Model):
