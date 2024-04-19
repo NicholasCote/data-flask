@@ -33,6 +33,7 @@ app.config['OAUTH2_PROVIDERS'] = {
         'client_secret': os.environ.get('NCOTE_GITHUB_OAUTH_SECRET'),
         'authorize_url': 'https://github.com/login/oauth/authorize',
         'token_url': 'https://github.com/login/oauth/access_token',
+        'redirect_uri': 'https://ncote-test.k8s.ucar.edu/callback/github',
         'userinfo': {
             'url': 'https://api.github.com/user/emails',
             'email': lambda json: json[0]['email'],
