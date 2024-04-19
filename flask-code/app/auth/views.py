@@ -72,7 +72,8 @@ def oauth2_callback(provider):
         'client_secret': provider_data['client_secret'],
         'code': request.args['code'],
         'grant_type': 'authorization_code',
-        'redirect_uri': 'https://ncote-test.k8s.ucar.edu/callback/github',
+        'redirect_uri': url_for('oauth2_callback', provider=provider,
+                                _external=True),
     }, headers={'Accept': 'application/json'})
     if response.status_code != 200:
         abort(401)
