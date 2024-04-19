@@ -44,7 +44,7 @@ def oauth2_authorize(provider):
 @app.route('/callback/<provider>')
 def oauth2_callback(provider):
     if not current_user.is_anonymous:
-        return redirect(url_for('index'))
+        return redirect(url_for('home'))
 
     provider_data = current_app.config['OAUTH2_PROVIDERS'].get(provider)
     if provider_data is None:
@@ -55,7 +55,7 @@ def oauth2_callback(provider):
         for k, v in request.args.items():
             if k.startswith('error'):
                 flash(f'{k}: {v}')
-        return redirect(url_for('index'))
+        return redirect(url_for('home'))
 
     # make sure that the state parameter matches the one we created in the
     # authorization request
