@@ -4,6 +4,7 @@ celery
 flask_restful
 boto3
 requests
+Flask-Login
 xarray
 numpy
 matplotlib

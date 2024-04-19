@@ -1,13 +1,11 @@
+import os
 import secrets
 from pathlib import Path
 
-from flask import Flask, url_for, g
+from flask import Flask
+from flask_login import LoginManager, UserMixin
 from flask_session import Session
-from flask_github import GitHub
-
 from flask_sqlalchemy import SQLAlchemy
-
-import os
 
 app = Flask(__name__)
 app.app_context().push()
@@ -24,34 +22,42 @@ except FileNotFoundError:
         secret_file.write(app_secret_key)
 
 app.config['SECRET_KEY'] = app_secret_key
-
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 app.config["SESSION_PERMANENT"] = False
 app.config['SESSION_TYPE'] = 'filesystem'
+app.config['OAUTH2_PROVIDERS'] = {
+    # GitHub OAuth 2.0 documentation:
+    # https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps
+    'github': {
+        'client_id': os.environ.get('NCOTE_GITHUB_OAUTH_ID'),
+        'client_secret': os.environ.get('NCOTE_GITHUB_OAUTH_SECRET'),
+        'authorize_url': 'https://github.com/login/oauth/authorize',
+        'token_url': 'https://github.com/login/oauth/access_token',
+        'userinfo': {
+            'url': 'https://api.github.com/user/emails',
+            'email': lambda json: json[0]['email'],
+        },
+        'scopes': ['user:email'],
+    },
+}
+
 Session(app)
-
-app.config['GITHUB_CLIENT_ID'] = os.environ['NCOTE_GITHUB_OAUTH_ID']
-app.config['GITHUB_CLIENT_SECRET'] = os.environ['NCOTE_GITHUB_OAUTH_SECRET']
-
-github = GitHub(app)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
-
 db = SQLAlchemy(app)
+login = LoginManager(app)
+login.login_view = 'home'
 
 @app.before_request
 def create_tables():
-    g.user = None
     db.create_all()
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    github_access_token = db.Column(db.String(255))
-    github_id = db.Column(db.Integer)
-    github_login = db.Column(db.String(255))
-
-    def __init__(self, github_access_token):
-        self.github_access_token = github_access_token
+    username = db.Column(db.String(64), nullable=False)
+    email = db.Column(db.String(64), nullable=True)
 
 from app.main import views
+from app.auth import views
+from app.nacordex import views
+from app.stratus import views

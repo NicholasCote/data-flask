@@ -1,7 +1,5 @@
-from flask import render_template, request, session, redirect, url_for, flash, jsonify, g
-from app import app, github, User, db
-from app.main.stratus_py import list_all_buckets, list_bucket_objs
-from app.nacordex.get_data import get_glade_picture
+from flask import render_template, request, session
+from app import app
 from git import Repo
 import os, shutil
 import fileinput
@@ -22,84 +20,6 @@ def header():
 @app.route('/templates/navbar.html')
 def navbar():
     return render_template('navbar.html')
-
-@app.route('/github/login')
-def github_login():
-    return github.authorize()
-
-@app.route('/github-callback')
-@github.authorized_handler
-def authorized(access_token):
-    next_url = url_for('home')
-    if access_token is None:
-        flash("Authorization failed.")
-        return redirect(next_url)
-
-    user = db.session.query(User).filter(User.github_access_token == access_token).first()
-    if user is None:
-        user = User(access_token)
-        db.session.add(user)
-
-    user.github_access_token = access_token
-    #github_user = github.get('/user')
-    #user.github_id = github_user['id']
-    #user.github_login = github_user['login']
-    db.session.commit()
-    session['github_access_token'] = access_token
-    #session['github_username'] = user.github_login
-    flash(access_token)
-    return redirect(next_url)
-
-@github.access_token_getter
-def token_getter():
-    user = g.user
-    if user is not None:
-        return user.github_access_token
-
-@app.route('/user')
-def user():
-    return jsonify(github.get('/user'))
-
-@app.route('/stratus/login', methods=['POST'])
-def stratus_login():
-    session['endpoint'] = request.form['endpoint']
-    session['access_id'] = request.form['access_id']
-    session['secret_key'] = request.form['secret_key']
-    return redirect(url_for('object_browser'))
-
-
-@app.route('/stratus/logout', methods=['POST'])
-def stratus_logout():
-    session.pop('access_id')
-    session.pop('secret_key')
-    return redirect(url_for('object_browser'))
-
-@app.route('/stratus/list_all', methods=['GET'])
-def stratus_list_all_buckets():
-    try:
-        og_dir = 'glade'
-        glade = os.listdir('/glade')
-        return render_template('object_browser.html', og_dir=og_dir, glade=glade, buckets = list_all_buckets(session['endpoint'], session['access_id'], session['secret_key']))
-    except (TypeError, FileNotFoundError) as e:
-        return render_template('object_browser.html', glade= ['No GLADE mount present'], buckets = list_all_buckets(session['endpoint'], session['access_id'], session['secret_key']))
-    
-@app.route('/stratus/list_bucket_objs', methods=['GET'])
-def stratus_list_all_bucket_objs():
-    try:
-        og_dir = 'glade'
-        glade = os.listdir('/glade')
-        bucket_name = request.args.get('bucket_name')
-        bucket_objs = list_bucket_objs(session['endpoint'], bucket_name, session['access_id'], session['secret_key'])
-        return render_template('object_browser.html', og_dir=og_dir, glade=glade, bucket_objs = bucket_objs, bucket_name = bucket_name)
-    except:
-        bucket_name = request.args.get('bucket_name')
-        bucket_objs = list_bucket_objs(session['endpoint'], bucket_name, session['access_id'], session['secret_key'])
-        return render_template('object_browser.html', glade=['No GLADE mount present'], bucket_objs = bucket_objs, bucket_name = bucket_name)
-    
-@app.route('/glade/picture')
-def glade_image():
-    image = get_glade_picture()
-    return render_template('image.html', image=image)
 
 @app.route('/addGH', methods=['GET', 'POST'])
 def add_gh():

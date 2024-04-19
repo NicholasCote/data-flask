@@ -34,9 +34,8 @@
                     {% endif %}
                 {% endwith %}
                 <div class="text-center">
-                In order to add the files to your repository please use this <a href="{{ url_for('github_login') }}">link to login via GitHub</a>.<br>
+                In order to add the files to your repository please use this <a href="{{ url_for('oauth2_authorize', provider='github') }}">link to login via GitHub</a>.<br>
                 <a href="{{ url_for('add_gh') }}">Add a GitHub actions workflow and Helm chart to your repository</a>
-                <a href="{{ url_for('user') }}">Show User</a>
                 <hr class="new">
                 <a href="{{ url_for('object_browser') }}">Use an object storage browser to explore the contents of S3 buckets</a>
                 <hr class="new">
