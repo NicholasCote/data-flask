@@ -168,12 +168,30 @@ body {
     background-color: #dbe2e9 !important;
 }
 
+p {
+    font-size: 1.25rem;
+    line-height: 1.875rem;
+    text-align: left;
+}
+
 big {
     font-size: larger !important;
 }
 
 big strong {
     font-weight: 700 !important;
+}
+
+code {
+    overflow: scroll;
+    background-color: #e9ecef;
+    color: #000000 !important;
+    display: flex;
+    padding: 4px 0px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 4px;
+    white-space: nowrap !important;
 }
 
 /* HEADERS */

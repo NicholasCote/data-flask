@@ -42,6 +42,8 @@ def add_gh():
     
 @app.route('/addGHconfirm', methods=['POST'])
 def add_gh_confirm():
+    github_username = request.form['github_username']
+    github_access_token = request.form['github_access_token']
     git_repo = request.form['git_repo']
     app_name = request.form['app_name']
     app_path = request.form['app_path']
@@ -57,7 +59,7 @@ def add_gh_confirm():
     git_template_url = "https://github.com/NicholasCote/GHA-helm-template.git"
     temp_dir = app_name + "_temp"
     user_temp_dir = app_name + "_user"
-    remote_repo = "https://" + session['github_username'] + ":" + session['github_access_token'] + "@" + git_repo.replace('https://','')
+    remote = "https://" + github_username + ":" + github_access_token + "@" + git_repo.replace('https://','')
     session
     if os.path.isdir(temp_dir):
         shutil.rmtree(temp_dir)
@@ -120,7 +122,8 @@ def add_gh_confirm():
     copy_tree(temp_dir + "/.github", user_temp_dir + "/.github")
     user_repo.git.add(all=True)
     user_repo.index.commit("Add custom Helm chart and GitHub Action from template")
-    origin = user_repo.remote_repo(name="origin")
+    user_repo = Repo(user_temp_dir)
+    origin = user_repo.remote(name="origin")
     origin.push()
     shutil.rmtree(temp_dir)
     shutil.rmtree(user_temp_dir)

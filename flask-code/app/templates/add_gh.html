@@ -21,20 +21,35 @@
     <body>
         <div id="nav"></div>
         <br>
-            <h1>Add GitHub Actions & Helm chart to repo</h1>
             <div class="bigbubble">
                 <h2>Add Automation files to an existing repo</h2>
                 <br>
                 <div class="text-center">
+                    <p style="padding: 5px 10%;">
+                        The following form will ask for information about the application to host. 
+                        It uses the input to fill out values found at this <a href="https://github.com/NicholasCote/GHA-helm-template">link to template repository</a>. 
+                        The next page will ask for confirmation of all the values. Once confirmed the template repository files are updated with the custom values and copied in to the specified repository.
+                        There will be a form to input your GitHub username and an <a href="https://github.com/settings/tokens">API token</a> to allow the application to push the changes to the specified repository.
+                        The username and token are not stored and are sent via HTTPS in a POST request. It is still best practice to use a token with a short expiration date, or delete it when done. The API token can also be used to register the self-hosted GitHub runner.
+                        The GitHub action that is copied over uses a self-hosted runner to run the jobs that will build the container image and push it to <a href="https://hub.k8s.ucar.edu">https://hub.k8s.ucar.edu</a>.
+                        If you have access to the UCAR VPN, or are on the UCAR network, and podman/docker is installed on your system, a self hosted runner can be launched on your system with the following command 
+                        <br><code>podman run -e REPO={user/org}/{repo_name} -e TOKEN=${GITHUB_RUNNER_REGISTRATION} hub.k8s.ucar.edu/ncote/github-runner:2024-04-03.21</code><br>
+                        Replace the {user/org}/{repo_name} with the URL suffix for the GitHub repository. The example code uses an environment variable to provide the API token to the container. 
+                        This can be replaced with the API token directly or you can export the API token to a local variable and use the command in a similar fashion. 
+                        The runner status will be shown when the GitHub Action added by this site starts. A successful run will create a Helm chart that is ready to use for deployment on the NSF NCAR CISL Cloud Pilot.
+                    </p>
+                    <hr class="new">
                     <form action="/addGH" method="POST">
                         What is the .git URL for the repository you want to add a Helm chart and GitHub Actions to?<br>
                         Git repo URL : <input type="text" id="git_repo" name="git_repo" placeholder="https://github.com/NicholasCote/GHA-helm-template.git" style="width:50%" required><br>
                         <hr class="new">
                         What do you want to name the application? This will be the prefix for the applications URL.<br>
+                        i.e. https://{my-web-app}.k8s.ucar.edu
                         Application name : <input type="text" id="app_name" name="app_name" placeholder="my-web-app" required><br>
                         <hr class="new">
                         What is the applications default URL suffix?<br>
-                        URL Path : <input type="text" id="app_path" name="app_path" placeholder="/api/v1/" required><br>
+                        i.e. https://{my-web-app}.k8s.ucar.edu{/default_path}
+                        URL Path : <input type="text" id="app_path" name="app_path" placeholder="/" required><br>
                         <hr class="new">
                         What is the path to the container image file in the repository?<br>
                         Directory with Container image file : <input type="text" id="containerfile_dir" name="containerfile_dir" placeholder="/containerfiles/" required><br>
@@ -44,14 +59,14 @@
                         <hr class="new">
                         What is the name of the Harbor project to push the container image to?<br>
                         <a href="https://ncar.github.io/cisl-cloud/how-to/K8s/harbor/push-pull.html#push-an-image-to-harbor">Link to creating Harbor project documentation</a><br>
-                        Harbor Project name : <input type="text" id="harbor_project" name="harbor_project" placeholder="cislcloudpilot" required><br>
+                        Harbor Project name : <input type="text" id="harbor_project" name="harbor_project" placeholder="ncote" required><br>
                         <hr class="new">
                         What is the name of the Harbor project robot account that can login?<br>
                         <a href="https://ncar.github.io/cisl-cloud/how-to/K8s/harbor/robot-account.html">Link to robot account documentation</a><br>
                         Harbor Project Robot Account Name : <input type="text" id="harbor_robot" name="harbor_robot" placeholder="robot-ncote+ncote" required><br>
                         <hr class="new">
                         What should the built container image be named?<br>
-                        Container image name : <input type="text" id="containerimg_name" name="containerimg_name" placeholder="ncote-test-app" required><br>
+                        Container image name : <input type="text" id="containerimg_name" name="containerimg_name" placeholder="my-web-app" required><br>
                         <hr class="new">
                         What port number does the application expose to access the content?<br>
                         Container port number : <input type="number" id="port_no" name="port_no" placeholder="8080" required><br>
@@ -63,8 +78,7 @@
                         CPU required : <input type="number" id="cpu" name="cpu" placeholder="1" required><br>
                         <hr class="new">
                         How many different copies of the application should run at all times?<br>
-                        Replicas : <input type="number" id="replicas" name="replicas" placeholder="1" required><br>
-                        <hr class="new">
+                        Replicas : <input type="number" id="replicas" name="replicas" placeholder="1" required><br><br>
                         <h2><input type="submit" value="Submit Changes"></h2>
                     </form>
                     <h2>
