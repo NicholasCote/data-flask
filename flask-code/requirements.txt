@@ -4,8 +4,12 @@ celery
 flask_restful
 boto3
 requests
+Flask-Login
 xarray
 numpy
 matplotlib
 distributed
 netcdf4
+GitPython
+GitHub-Flask
+Flask-SQLAlchemy

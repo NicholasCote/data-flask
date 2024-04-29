@@ -1,8 +1,10 @@
+import os
 import secrets
 from pathlib import Path
 
-from flask import Flask, url_for
+from flask import Flask
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.app_context().push()
@@ -18,9 +20,11 @@ except FileNotFoundError:
         secret_file.write(app_secret_key)
 
 app.config['SECRET_KEY'] = app_secret_key
-
 app.config["SESSION_PERMANENT"] = False
 app.config['SESSION_TYPE'] = 'filesystem'
+
 Session(app)
 
 from app.main import views
+from app.nacordex import views
+from app.stratus import views

@@ -34,3 +34,14 @@ spec:
         volumeMounts:
         - mountPath: /glade/campaign
           name: {{ .Values.webapp.volume1.name }}
+        env:
+        - name: NCOTE_GITHUB_OAUTH_ID
+          valueFrom:
+            secretKeyRef:
+              name: ncote-github-oauth
+              key: id
+        - name: NCOTE_GITHUB_OAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ncote-github-oauth
+              key: secret

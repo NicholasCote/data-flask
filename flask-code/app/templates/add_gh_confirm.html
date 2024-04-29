@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <title>Home | NSF NCAR Stratus & GLADE UI</title>
+        <link rel="canonical" href="{{ url_for('home') }}"/>
+        <meta property="og:title" content="Home | NCAR Stratus UI"/>
+        <meta property="og:url" content="{{ url_for('home') }}"/>
+        <meta property="og:site_name" content="ncar_stratus_ui"/>
+        <meta property="og:type" content="website"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static',  filename='style.css')}}" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="{{url_for('static',  filename='app.js')}}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/e08b5a6906.js" crossorigin="anonymous"></script>
+    <script>
+        $(function(){
+            $('#nav').load("{{ url_for('navbar') }}")
+        })
+    </script>
+    <body>
+        <div id="nav"></div>
+        <br>
+            <h1>Add GitHub Actions & Helm chart to repo</h1>
+            <div class="bigbubble">
+                <h2>Add Automation files to an existing repo</h2>
+                <div class="text-center">
+                    <strong>Please confirm the details below to add customized files.</strong>
+                    <hr class="new">
+                    Repository to add to :<br> <strong>{{ git_repo }}</strong>
+                    <hr class="new">
+                    Name to use for the application :<br> <strong>{{ app_name }}</strong> 
+                    <hr class="new">
+                    The Container image file path and name :<br> <strong>{{ containerfile_dir }}{{ containerfile_name }}</strong> 
+                    <hr class="new">
+                    Project in Harbor to push image to :<br> <strong>{{ harbor_project }}</strong> 
+                    <hr class="new">
+                    Name for the container image :<br> <strong>{{ containerimg_name }}</strong> 
+                    <hr class="new">
+                    Port number exposed by the container :<br> <strong>{{ port_no }}</strong> 
+                    <hr class="new">
+                    Resources :<br> CPU : <strong>{{ cpu }}</strong> <br> Memory : <strong>{{ mem }}</strong> 
+                    <hr class="new">
+                    Number of replicas :<br> <strong>{{ replicas }}</strong> 
+                    <hr class="new">
+                    The URL used for the application will be:<br>
+                    <a href="https://{{ app_name }}.k8s.ucar.edu/">https://{{ app_name }}.k8s.ucar.edu/</a>
+                    <hr class="new">
+                    <strong>Your GitHub user name and an <a href="https://github.com/settings/tokens">API Token</a> are required to push the changes.<br>
+                    The API token is secured via HTTPS and not stored. Set a short token expiration for this as well.<br></strong><br>
+                    <h2>
+                        <form action="/addGHconfirm" method="POST">
+                            GitHub Username <input type="text" id="github_username" name="github_username" required><br>
+                            <hr class="new">
+                            GitHub API Token <input type="password" id="github_access_token" name="github_access_token" required><br>
+                            <hr class="new">
+                            <input type="hidden" id="git_repo" name="git_repo" value="{{ git_repo }}">
+                            <input type="hidden" id="app_name" name="app_name" value="{{ app_name }}">
+                            <input type="hidden" id="app_path" name="app_path" value="{{ app_path }}">
+                            <input type="hidden" id="containerfile_dir" name="containerfile_dir" value="{{ containerfile_dir }}">
+                            <input type="hidden" id="containerfile_name" name="containerfile_name" value="{{ containerfile_name }}">
+                            <input type="hidden" id="harbor_project" name="harbor_project" value="{{ harbor_project }}">
+                            <input type="hidden" id="harbor_robot" name="harbor_robot" value="{{ harbor_robot }}">
+                            <input type="hidden" id="containerimg_name" name="containerimg_name" value="{{ containerimg_name }}">
+                            <input type="hidden" id="port_no" name="port_no" value="{{ port_no }}">
+                            <input type="hidden" id="mem" name="mem" value="{{ mem }}">
+                            <input type="hidden" id="cpu" name="cpu" value="{{ cpu }}">
+                            <input type="hidden" id="replicas" name="replicas" value="{{ replicas }}">
+                        <input type="submit" value="Add files">
+                        </form>
+                </h2>
+                <h2>
+                    <form action="/" method="get">
+                        <input type="submit" value="Home">
+                    </form>
+                </h2>
+            </div>
+            </div>
+        </body>
+</html>
