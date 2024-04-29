@@ -191,7 +191,7 @@ code {
     padding-left: 8px;
     padding-right: 8px;
     border-radius: 4px;
-    white-space: nowrap !important;
+    white-space: wrap !important;
 }
 
 /* HEADERS */
