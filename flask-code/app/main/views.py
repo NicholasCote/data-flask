@@ -72,7 +72,7 @@ def add_gh_confirm():
     else:
         os.makedirs(user_temp_dir)
     temp_repo = Repo.clone_from(git_template_url, temp_dir)
-    user_repo = Repo.clone_from(git_repo, user_temp_dir)
+    user_repo = Repo.clone_from(remote, user_temp_dir)
     with fileinput.FileInput(app_name + "_temp/app-helm-chart/values.yaml", inplace=True) as values:
         for line in values:
             if "<app_name>" in line:
