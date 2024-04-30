@@ -1,4 +1,4 @@
-from flask import render_template, request, session
+from flask import render_template, request, session, flash
 from app import app
 from git import Repo
 import os, shutil
@@ -118,13 +118,19 @@ def add_gh_confirm():
                 print(new_line, end='')
             else:
                 print(line, end='')
-    copy_tree(temp_dir + "/app-helm-chart", user_temp_dir + "/app-helm-chart")
-    copy_tree(temp_dir + "/.github", user_temp_dir + "/.github")
-    user_repo.git.add(all=True)
-    user_repo.index.commit("Add custom Helm chart and GitHub Action from template")
-    user_repo = Repo(user_temp_dir)
-    origin = user_repo.remote(name="origin")
-    origin.push()
-    shutil.rmtree(temp_dir)
-    shutil.rmtree(user_temp_dir)
-    return render_template('home.html')
+    try:
+        copy_tree(temp_dir + "/app-helm-chart", user_temp_dir + "/app-helm-chart")
+        copy_tree(temp_dir + "/.github", user_temp_dir + "/.github")
+        user_repo.git.add(all=True)
+        user_repo.index.commit("Add custom Helm chart and GitHub Action from template")
+        user_repo = Repo(user_temp_dir)
+        origin = user_repo.remote(name="origin")
+        origin.push()
+        shutil.rmtree(temp_dir)
+        shutil.rmtree(user_temp_dir)
+        return render_template('home.html')
+    except Exception as e:
+        flash(e)
+        shutil.rmtree(temp_dir)
+        shutil.rmtree(user_temp_dir)
+        return render_template('home.html')
