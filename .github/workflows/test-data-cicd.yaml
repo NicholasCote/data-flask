@@ -23,7 +23,7 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
       - name: Build Podman image
         run: |
-          podman build -t ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }} .
+          podman build -t hub.k8s.ucar.edu/ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }} .
       # Login to Harbor with a robot account for the ncote project in Harbor
       - name: Login to Harbor
         run: podman login hub.k8s.ucar.edu -u robot-ncote+dataflask -p ${{ secrets.HARBOR_ROBOT_PW  }}
