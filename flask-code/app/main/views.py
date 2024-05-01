@@ -59,7 +59,7 @@ def add_gh_confirm():
     git_template_url = "https://github.com/NicholasCote/GHA-helm-template.git"
     temp_dir = app_name + "_temp"
     user_temp_dir = app_name + "_user"
-    remote_repo = "https://" + github_access_token + "@" + git_repo.replace('https://','')
+    remote_repo = "https://" + github_username + ":" + github_access_token + "@" + git_repo.replace('https://','')
     session
     if os.path.isdir(temp_dir):
         shutil.rmtree(temp_dir)
