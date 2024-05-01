@@ -119,9 +119,10 @@ def add_gh_confirm():
             else:
                 print(line, end='')
     try:
+        os.mkdir(user_temp_dir + "/app-helm-chart")
+        os.mkdir(user_temp_dir + "/.github")
         copy_tree(temp_dir + "/app-helm-chart", user_temp_dir + "/app-helm-chart")
         copy_tree(temp_dir + "/.github", user_temp_dir + "/.github")
-        os.environ
         user_repo.git.add(all=True)
         user_repo.index.commit("Add custom Helm chart and GitHub Action from template")
         user_repo = Repo(user_temp_dir)
