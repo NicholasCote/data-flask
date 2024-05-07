@@ -129,8 +129,12 @@ def add_gh_confirm():
         user_repo.index.commit("Add custom Helm chart and GitHub Action from template")
         origin = user_repo.remote(name="origin")
         origin.push()
+        shutil.rmtree(temp_dir)
+        shutil.rmtree(user_temp_dir)
         flash("Templates added to the GitHub repository")
         return render_template('home.html')
     except Exception as e:
         flash(e)
+        shutil.rmtree(temp_dir)
+        shutil.rmtree(user_temp_dir)
         return render_template('home.html')
