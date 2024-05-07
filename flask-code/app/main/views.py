@@ -59,7 +59,7 @@ def add_gh_confirm():
     git_template_url = "https://github.com/NicholasCote/GHA-helm-template.git"
     temp_dir = app_name + "_temp"
     user_temp_dir = app_name + "_user"
-    remote_repo = "https://" + github_access_token + ":x-oauth-basic@" + git_repo.replace('https://','')
+    remote_repo = "https://" + github_username + ":" + github_access_token + "@" + git_repo.replace('https://','')
     session
     if os.path.isdir(temp_dir):
         shutil.rmtree(temp_dir)
@@ -72,7 +72,8 @@ def add_gh_confirm():
     else:
         os.makedirs(user_temp_dir)
     temp_repo = Repo.clone_from(git_template_url, temp_dir)
-    user_repo = Repo.clone_from(git_repo, user_temp_dir)
+    user_repo = Repo.clone_from(remote_repo, user_temp_dir)
+    Repo.c
     with fileinput.FileInput(app_name + "_temp/app-helm-chart/values.yaml", inplace=True) as values:
         for line in values:
             if "<app_name>" in line:
@@ -125,7 +126,6 @@ def add_gh_confirm():
         os.mkdir(user_temp_dir + "/.github/workflows")
         copy_tree(temp_dir + "/app-helm-chart", user_temp_dir + "/app-helm-chart")
         copy_tree(temp_dir + "/.github", user_temp_dir + "/.github")
-        user_repo = Repo(user_temp_dir)
         user_repo.git.add(all=True)
         user_repo.index.commit("Add custom Helm chart and GitHub Action from template")
         origin = user_repo.remote(name="origin")
