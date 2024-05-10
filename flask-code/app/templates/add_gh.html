@@ -34,7 +34,7 @@
                         It is still best practice to use a token with a short expiration date, or delete it when done. The API token can also be used to register the self-hosted GitHub runner.
                         The GitHub action that is copied over uses a self-hosted runner to run the jobs that will build the container image and push it to <a href="https://hub.k8s.ucar.edu">https://hub.k8s.ucar.edu</a>.
                         If you have access to the UCAR VPN, or are on the UCAR network, and podman/docker is installed on your system, a self hosted runner can be launched on your system with the following command 
-                        <br><pre><code>podman run -e REPO={user/org}/{repo_name} -e TOKEN=${GITHUB_RUNNER_REGISTRATION} hub.k8s.ucar.edu/ncote/github-runner:2024-05-06.21.13</code></pre><br>
+                        <br><pre class="pre-scrollable"><code>podman run -e REPO={user/org}/{repo_name} -e TOKEN=${GITHUB_RUNNER_REGISTRATION} hub.k8s.ucar.edu/ncote/github-runner:2024-05-06.21.13</code></pre><br>
                         Replace the {user/org}/{repo_name} with the URL suffix for the GitHub repository. The example code uses an environment variable to provide the API token to the container. 
                         This can be replaced with the API token directly or you can export the API token to a local variable and use the command in a similar fashion. 
                         The runner status will be shown when the GitHub Action added by this site starts. A successful run will create a Helm chart that is ready to use for deployment on the NSF NCAR CISL Cloud Pilot.
