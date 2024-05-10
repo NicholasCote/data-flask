@@ -3,7 +3,10 @@ A Flask application for exploring items of value at NCAR on k8s
 
 ## CI/CD Status
 
-| Container Build Status |  ![Dev Build](https://github.com/NicholasCote/data-flask/actions/workflows/test-data-cicd.yaml/badge.svg) | ![Main Build](https://github.com/NicholasCote/data-flask/actions/workflows/data-cicd.yaml/badge.svg) |
+| GitHub Action | Status |
+| --- | --- |
+| Test Build & Push |  ![Dev Build](https://github.com/NicholasCote/data-flask/actions/workflows/test-data-cicd.yaml/badge.svg) |
+| Main Build & Push |  ![Main Build](https://github.com/NicholasCote/data-flask/actions/workflows/data-cicd.yaml/badge.svg) |
 
 ## Blue/Green
 
