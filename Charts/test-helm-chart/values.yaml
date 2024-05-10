@@ -13,7 +13,7 @@ webapp:
     path: /gpfs/csfs1
     readOnly: true
   container: 
-    image: hub.k8s.ucar.edu/ncote/data-flask-dev:2024-05-10.17.51
+    image: hub.k8s.ucar.edu/ncote/data-flask-dev:2024-05-10.20.10
     port: 5000
     memory: 4G
     cpu: 2
