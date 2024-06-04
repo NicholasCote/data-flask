@@ -12,15 +12,16 @@ jobs:
   podman-build-push:
     runs-on: ubuntu-latest
     outputs:
-      tagdate: ${{ steps.date.ouputs.date }}
+      output1: ${{ steps.tagdate.ouputs.date }}
     steps:
       # Get the date to apply to image tag
       - name: Get current date
-        id: date
+        id: tagdate
         run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
   show_output:
     runs-on: ubuntu-latest
     needs: podman-build-push
     steps:
-      - name: output
-        run: echo ${{ needs.podman-build-push.outputs.tagdate }}
+      - env:
+          OUTPUT1: ${{ needs.podman-build-push.outputs.output1 }}
+        run: echo $OUTPUT1
