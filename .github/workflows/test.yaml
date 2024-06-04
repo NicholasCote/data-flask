@@ -12,7 +12,7 @@ jobs:
   podman-build-push:
     runs-on: ubuntu-latest
     outputs:
-      output1: ${{ steps.tagdate.ouputs.date }}
+      output1: ${{ steps.tagdate.outputs.date }}
     steps:
       # Get the date to apply to image tag
       - name: Get current date
