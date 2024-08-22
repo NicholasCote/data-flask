@@ -18,6 +18,8 @@ jobs:
       - name: Get current date
         id: tagdate
         run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
+      - name: Login to Harbor
+        run: docker login hub.k8s.ucar.edu -u robot-ncote+dataflask -p ${{ secrets.HARBOR_ROBOT_PW  }}
   show_output:
     runs-on: ubuntu-latest
     needs: podman-build-push
