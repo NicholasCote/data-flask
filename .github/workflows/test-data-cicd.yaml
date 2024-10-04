@@ -6,6 +6,9 @@ on:
       - flask-code/**
     branches:
       - dev
+permissions:
+  contents: write
+  pull-requests: write
 
 env:
   GITHUB_BRANCH: ${{ github.ref_name }}
