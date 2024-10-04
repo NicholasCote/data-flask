@@ -91,7 +91,7 @@ def add_gh_confirm():
                 new_line = line.replace("<container_port>", port_no)
                 print(new_line, end='')
             elif "<memory>" in line:
-                new_line = line.replace("<memory>", mem)
+                new_line = line.replace("<memory>", mem + 'G')
                 print(new_line, end='')
             elif "<CPU>" in line:
                 new_line = line.replace("<CPU>", cpu)

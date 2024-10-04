@@ -1,0 +1,13 @@
+name: Data Flask DEV CICD Pipeline
+
+on: 
+  push:
+    branches:
+      - dev
+
+jobs:
+  docker-harbor-login:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Harbor
+        run: docker login hub.k8s.ucar.edu -u robot-ncote+dataflask -p ${{ secrets.HARBOR_ROBOT_PW  }}
