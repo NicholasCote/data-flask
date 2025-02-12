@@ -33,7 +33,7 @@ jobs:
           # Provide the current directory as build context 
           context: wagtail/cirrus_demo/.
           # Specify where the Dockerfile is located in relation to the repo base path
-          file: Dockerfile
+          file: wagtail/cirrus_demo/Dockerfile
           # Enable the push to docker hub
           push: true
           # Provide the tags to apply to the image, this example uses the latest image tag 
