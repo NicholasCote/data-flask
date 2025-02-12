@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.webapp.name }}-flower
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.webapp.name }}-flower
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.webapp.name }}-flower
+    spec:
+      containers:
+      - name: {{ .Values.webapp.name }}-flower
+        image: {{ .Values.webapp.container.image }}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        args:
+          - celery
+          - -A
+          - cirrus_demo
+          - flower
+          - --port=5555
+          - --url_prefix=flower
+        ports:
+          - containerPort: 5555
