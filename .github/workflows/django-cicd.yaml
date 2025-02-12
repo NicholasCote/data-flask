@@ -6,8 +6,6 @@ on:
       - wagtail/**
     branches:
       - dev
-permissions:
-  contents: read
 
 jobs:
   container-build-push:

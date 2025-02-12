@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
     <title>Home | NSF NCAR Stratus & GLADE UI</title>
-        <link rel="canonical" href=""/>
+        <link rel="canonical" href="{% url 'home' %}"/>
         <meta property="og:title" content="Home | NCAR Stratus UI"/>
-        <meta property="og:url" content=""/>
+        <meta property="og:url" content="{% url 'home' %}"/>
         <meta property="og:site_name" content="ncar_stratus_ui"/>
         <meta property="og:type" content="website"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,11 +22,8 @@
             <div class="bigbubble">
                 <h2>Toolbox</h2>
                 <div class="text-center">
-                <a href="">Add a GitHub actions workflow and Helm chart to your repository</a>
+                    <a href="{% url 'analysis' %}">Test for Celery</a>
                 <hr class="new">
-                <a href="">Use an object storage browser to explore the contents of S3 buckets</a>
-                <hr class="new">
-                <a href="">View an image created dynamically from GLADE data</a>
                 </div>
                 <br>
             </div>

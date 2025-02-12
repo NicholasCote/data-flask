@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <title>Home | NSF NCAR Stratus & GLADE UI</title>
+        <link rel="canonical" href="{% url 'home' %}"/>
+        <meta property="og:title" content="Home | NCAR Stratus UI"/>
+        <meta property="og:url" content="{% url 'home' %}"/>
+        <meta property="og:site_name" content="ncar_stratus_ui"/>
+        <meta property="og:type" content="website"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/e08b5a6906.js" crossorigin="anonymous"></script>
+    <body>
+        <div id="nav">
+            {% include 'navbar.html' %}
+        </div>
+        <div class="container mt-5">
+            <h2>NYC Taxi Data Analysis</h2>
+            <button id="analyzeBtn" class="btn btn-primary">Analyze Taxi Data</button>
+            
+            <div id="results" class="mt-4" style="display: none;">
+                <h3>Analysis Results:</h3>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>Average Fare:</strong> $<span id="avgFare"></span></p>
+                        <p><strong>Maximum Trip Distance:</strong> <span id="maxDist"></span> Miles</p>
+                        <p><strong>Total Passengers:</strong> <span id="totalPass"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="loading" style="display: none;">
+                <p class="text-muted">Analysis in progress...</p>
+            </div>
+        </div>
+
+        <script>
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
+            const loadingDiv = document.getElementById('loading');
+            const resultsDiv = document.getElementById('results');
+            
+            loadingDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            
+            // Trigger the analysis
+            fetch('/trigger-analysis/')
+                .then(response => response.json())
+                .then(data => {
+                    checkStatus(data.task_id);
+                });
+        });
+
+        function checkStatus(taskId) {
+            fetch(`/check-task/${taskId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('results').style.display = 'block';
+                        
+                        document.getElementById('avgFare').textContent = data.result.average_fare.toFixed(2);
+                        document.getElementById('maxDist').textContent = data.result.max_distance.toFixed(4);
+                        document.getElementById('totalPass').textContent = data.result.total_passengers;
+                    } else {
+                        // Check again in 1 second
+                        setTimeout(() => checkStatus(taskId), 1000);
+                    }
+                });
+        }
+        </script>
+    </body>
+</html>
