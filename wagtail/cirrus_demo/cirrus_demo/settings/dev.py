@@ -11,6 +11,7 @@ ALLOWED_HOSTS = ["*"]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # You'll need Redis installed
 
 try:
     from .local import *

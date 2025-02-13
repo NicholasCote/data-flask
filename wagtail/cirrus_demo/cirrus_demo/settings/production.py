@@ -6,6 +6,8 @@ ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
 
 SECRET_KEY="maybe this will work one time"
 
+CELERY_BROKER_URL = 'redis://redis:6379/0'  # You'll need Redis installed
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
