@@ -79,9 +79,16 @@
             fetch(`/check-task/${taskId}/`)
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Task check response:', data);  // Debug print
                     if (data.status === 'SUCCESS') {
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('avgResults').style.display = 'block';
+                
+                        console.log('Setting values:', {  // Debug print
+                            avgFare: data.result.average_fare,
+                            maxDist: data.result.max_distance,
+                            totalPass: data.result.total_passengers
+                        });
                         
                         document.getElementById('avgFare').textContent = data.result.average_fare.toFixed(2);
                         document.getElementById('maxDist').textContent = data.result.max_distance.toFixed(4);
@@ -113,10 +120,15 @@
             fetch(`/check-task/${taskId}/`)
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Task check response:', data);  // Debug print
                     if (data.status === 'SUCCESS') {
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('maxResults').style.display = 'block';
-                        
+                    
+                        console.log('Setting values:', {  // Debug print
+                            maxFare: data.result.maximum_fare
+                        });
+
                         document.getElementById('maxFare').textContent = data.result.maximum_fare.toFixed(2);
                     } else {
                         setTimeout(() => checkMaxStatus(taskId), 1000);
@@ -145,10 +157,15 @@
             fetch(`/check-task/${taskId}/`)
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Task check response:', data);  // Debug print
                     if (data.status === 'SUCCESS') {
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('sumResults').style.display = 'block';
                         
+                        console.log('Setting values:', {  // Debug print
+                            sumFare: data.result.total_fare
+                        });
+
                         document.getElementById('sumFare').textContent = data.result.total_fare.toFixed(2);
                     } else {
                         setTimeout(() => checkSumStatus(taskId), 1000);

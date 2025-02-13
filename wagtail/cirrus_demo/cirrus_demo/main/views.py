@@ -19,21 +19,30 @@ def trigger_sum_analysis(request):
 
 def check_task_status(request, task_id):
     task = analyze_taxi_data.AsyncResult(task_id)
+    print(f"Task state: {task.state}")  # Debug print
     if task.ready():
-        return JsonResponse({'status': 'completed', 'result': task.get()})
-    return JsonResponse({'status': 'pending'})
+        result = task.get()
+        print(f"Task result: {result}")  # Debug print
+        return JsonResponse({'status': task.state, 'result': result})
+    return JsonResponse({'status': task.state})
 
 def check_max_task_status(request, task_id):
     task = max_taxi_fare.AsyncResult(task_id)
+    print(f"Task state: {task.state}")  # Debug print
     if task.ready():
-        return JsonResponse({'status': 'completed', 'result': task.get()})
-    return JsonResponse({'status': 'pending'})
+        result = task.get()
+        print(f"Task result: {result}")  # Debug print
+        return JsonResponse({'status': task.state, 'result': result})
+    return JsonResponse({'status': task.state})
 
 def check_total_task_status(request, task_id):
     task = total_taxi_fare.AsyncResult(task_id)
+    print(f"Task state: {task.state}")  # Debug print
     if task.ready():
-        return JsonResponse({'status': 'completed', 'result': task.get()})
-    return JsonResponse({'status': 'pending'})
+        result = task.get()
+        print(f"Task result: {result}")  # Debug print
+        return JsonResponse({'status': task.state, 'result': result})
+    return JsonResponse({'status': task.state})
 
 def analysis_view(request):
     return render(request, 'analysis.html')
