@@ -19,10 +19,13 @@ def trigger_sum_analysis(request):
 
 def check_task_status(request, task_id):
     task = analyze_taxi_data.AsyncResult(task_id)
-    print(f"Task state: {task.state}")  # Debug print
+    print(f"Task ID: {task_id}")
+    print(f"Task state: {task.state}")
+    print(f"Task ready: {task.ready()}")
+    print(f"Task backend: {task.backend}")
     if task.ready():
         result = task.get()
-        print(f"Task result: {result}")  # Debug print
+        print(f"Task result: {result}")
         return JsonResponse({'status': task.state, 'result': result})
     return JsonResponse({'status': task.state})
 
