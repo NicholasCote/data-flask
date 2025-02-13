@@ -79,7 +79,7 @@
             fetch(`/check-task/${taskId}/`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'completed') {
+                    if (data.status === 'SUCCESS') {
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('avgResults').style.display = 'block';
                         
@@ -89,6 +89,9 @@
                     } else {
                         setTimeout(() => checkAverageStatus(taskId), 1000);
                     }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
                 });
         }
         
@@ -110,7 +113,7 @@
             fetch(`/check-task/${taskId}/`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'completed') {
+                    if (data.status === 'SUCCESS') {
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('maxResults').style.display = 'block';
                         
@@ -118,6 +121,9 @@
                     } else {
                         setTimeout(() => checkMaxStatus(taskId), 1000);
                     }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
                 });
         }
         
@@ -139,7 +145,7 @@
             fetch(`/check-task/${taskId}/`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'completed') {
+                    if (data.status === 'SUCCESS') {
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('sumResults').style.display = 'block';
                         
@@ -147,6 +153,9 @@
                     } else {
                         setTimeout(() => checkSumStatus(taskId), 1000);
                     }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
                 });
         }
         </script>
