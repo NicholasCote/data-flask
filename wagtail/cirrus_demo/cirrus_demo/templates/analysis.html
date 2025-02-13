@@ -20,9 +20,12 @@
         <div class="container mt-5">
             <h2>NYC Taxi Data Analysis</h2>
             <button id="analyzeBtn" class="btn btn-primary">Analyze Taxi Data</button>
+            <button id="maxAnalyzeBtn" class="btn btn-primary">Analyze Max Fare Taxi Data</button>
+            <button id="sumAnalyzeBtn" class="btn btn-primary">Analyze Sum Fare Taxi Data</button>
             
-            <div id="results" class="mt-4" style="display: none;">
-                <h3>Analysis Results:</h3>
+            <!-- Average Analysis Results -->
+            <div id="avgResults" class="mt-4" style="display: none;">
+                <h3>Average Analysis Results:</h3>
                 <div class="card">
                     <div class="card-body">
                         <p><strong>Average Fare:</strong> $<span id="avgFare"></span></p>
@@ -32,41 +35,117 @@
                 </div>
             </div>
             
+            <!-- Maximum Fare Results -->
+            <div id="maxResults" class="mt-4" style="display: none;">
+                <h3>Maximum Fare Analysis Results:</h3>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>Maximum Fare:</strong> $<span id="maxFare"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sum Fare Results -->
+            <div id="sumResults" class="mt-4" style="display: none;">
+                <h3>Total Fare Analysis Results:</h3>
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>Total Fares:</strong> $<span id="sumFare"></span></p>
+                    </div>
+                </div>
+            </div>
+            
             <div id="loading" style="display: none;">
                 <p class="text-muted">Analysis in progress...</p>
             </div>
         </div>
-
+        
         <script>
         document.getElementById('analyzeBtn').addEventListener('click', function() {
             const loadingDiv = document.getElementById('loading');
-            const resultsDiv = document.getElementById('results');
+            const resultsDiv = document.getElementById('avgResults');
             
             loadingDiv.style.display = 'block';
             resultsDiv.style.display = 'none';
             
-            // Trigger the analysis
             fetch('/trigger-analysis/')
                 .then(response => response.json())
                 .then(data => {
-                    checkStatus(data.task_id);
+                    checkAverageStatus(data.task_id);
                 });
         });
-
-        function checkStatus(taskId) {
+        
+        function checkAverageStatus(taskId) {
             fetch(`/check-task/${taskId}/`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'completed') {
                         document.getElementById('loading').style.display = 'none';
-                        document.getElementById('results').style.display = 'block';
+                        document.getElementById('avgResults').style.display = 'block';
                         
                         document.getElementById('avgFare').textContent = data.result.average_fare.toFixed(2);
                         document.getElementById('maxDist').textContent = data.result.max_distance.toFixed(4);
                         document.getElementById('totalPass').textContent = data.result.total_passengers;
                     } else {
-                        // Check again in 1 second
-                        setTimeout(() => checkStatus(taskId), 1000);
+                        setTimeout(() => checkAverageStatus(taskId), 1000);
+                    }
+                });
+        }
+        
+        document.getElementById('maxAnalyzeBtn').addEventListener('click', function() {
+            const loadingDiv = document.getElementById('loading');
+            const resultsDiv = document.getElementById('maxResults');
+            
+            loadingDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            
+            fetch('/trigger-max-analysis/')
+                .then(response => response.json())
+                .then(data => {
+                    checkMaxStatus(data.task_id);
+                });
+        });
+        
+        function checkMaxStatus(taskId) {
+            fetch(`/check-task/${taskId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('maxResults').style.display = 'block';
+                        
+                        document.getElementById('maxFare').textContent = data.result.maximum_fare.toFixed(2);
+                    } else {
+                        setTimeout(() => checkMaxStatus(taskId), 1000);
+                    }
+                });
+        }
+        
+        document.getElementById('sumAnalyzeBtn').addEventListener('click', function() {
+            const loadingDiv = document.getElementById('loading');
+            const resultsDiv = document.getElementById('sumResults');
+            
+            loadingDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            
+            fetch('/trigger-sum-analysis/')
+                .then(response => response.json())
+                .then(data => {
+                    checkSumStatus(data.task_id);
+                });
+        });
+        
+        function checkSumStatus(taskId) {
+            fetch(`/check-task/${taskId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('sumResults').style.display = 'block';
+                        
+                        document.getElementById('sumFare').textContent = data.result.total_fare.toFixed(2);
+                    } else {
+                        setTimeout(() => checkSumStatus(taskId), 1000);
                     }
                 });
         }
