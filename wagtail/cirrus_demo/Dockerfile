@@ -60,6 +60,7 @@ run_web() {
 # Function to run the Celery worker
 run_worker() {
     echo "Starting Celery worker..."
+    python manage.py migrate --noinput
     exec celery -A cirrus_demo worker -l info
 }
 
