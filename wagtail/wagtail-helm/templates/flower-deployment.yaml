@@ -23,11 +23,6 @@ spec:
             cpu: 500m
             memory: 256Mi
         args:
-          - celery
-          - -A
-          - cirrus_demo
           - flower
-          - --port=5555
-          - --url_prefix=flower
         ports:
           - containerPort: 5555

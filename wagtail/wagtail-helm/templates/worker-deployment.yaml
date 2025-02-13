@@ -29,9 +29,5 @@ spec:
             memory: 10Gi
         imagePullPolicy: {{ .Values.webapp.container.imagePullPolicy }}
         args:
-            - celery
-            - -A
-            - cirrus_demo
             - worker
-            - --loglevel=info
     

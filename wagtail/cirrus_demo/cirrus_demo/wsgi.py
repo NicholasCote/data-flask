@@ -1,16 +1,16 @@
-"""
-WSGI config for cirrus_demo project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
-"""
-
 import os
+import logging
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cirrus_demo.settings.dev")
+logger = logging.getLogger('django.request')
 
-application = get_wsgi_application()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cirrus_demo.settings.production")
+
+def debug_application(environ, start_response):
+    logger.debug(f"Request received: {environ['REQUEST_METHOD']} {environ['PATH_INFO']}")
+    logger.debug(f"HTTP headers: {dict((k,v) for k,v in environ.items() if k.startswith('HTTP_'))}")
+    
+    return get_wsgi_application()(environ, start_response)
+
+application = debug_application

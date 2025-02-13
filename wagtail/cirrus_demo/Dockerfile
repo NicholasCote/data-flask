@@ -8,11 +8,10 @@ RUN useradd wagtail
 EXPOSE 8000
 
 # Set environment variables.
-# 1. Force Python stdout and stderr streams to be unbuffered.
-# 2. Set PORT variable that is used by Gunicorn. This should match "EXPOSE"
-#    command.
 ENV PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    DJANGO_SETTINGS_MODULE=cirrus_demo.settings.production \
+    PYTHONPATH=/app
 
 # Install system packages required by Wagtail and Django.
 RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
@@ -24,37 +23,77 @@ RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-r
     libwebp-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# Install the application server.
-RUN pip install "gunicorn==20.0.4"
-
-# Install the project requirements.
-COPY requirements.txt /
-RUN pip install -r /requirements.txt
-
 # Use /app folder as a directory where the source code is stored.
 WORKDIR /app
 
-# Set this directory to be owned by the "wagtail" user. This Wagtail project
-# uses SQLite, the folder needs to be owned by the user that
-# will be writing to the database file.
-RUN chown wagtail:wagtail /app
+# Copy the requirements first to leverage Docker cache
+COPY requirements.txt /app/
+RUN pip install -r requirements.txt
+RUN pip install "gunicorn==20.1.0"
 
 # Copy the source code of the project into the container.
-COPY --chown=wagtail:wagtail . .
+COPY --chown=wagtail:wagtail . /app/
 
-# Use user "wagtail" to run the build commands below and the server itself.
+# Set directory ownership
+RUN chown -R wagtail:wagtail /app
+
+# Create the entrypoint script
+COPY --chown=wagtail:wagtail <<'EOF' /app/docker-entrypoint.sh
+#!/bin/bash
+set -e
+
+# Function to run the web server
+run_web() {
+    echo "Starting web server..."
+    python manage.py migrate --noinput
+    exec gunicorn cirrus_demo.wsgi:application \
+        --bind 0.0.0.0:8000 \
+        --workers 3 \
+        --timeout 120 \
+        --log-level debug \
+        --access-logfile - \
+        --error-logfile - \
+        --capture-output \
+        --enable-stdio-inheritance
+}
+
+# Function to run the Celery worker
+run_worker() {
+    echo "Starting Celery worker..."
+    exec celery -A cirrus_demo worker -l info
+}
+
+# Function to run Flower dashboard
+run_flower() {
+    echo "Starting Flower dashboard..."
+    exec celery -A cirrus_demo flower --port=5555 --url_prefix=flower
+}
+
+# Check command argument
+case "$1" in
+    "web")
+        run_web
+        ;;
+    "worker")
+        run_worker
+        ;;
+    "flower")
+        run_flower
+        ;;
+    *)
+        echo "Usage: $0 {web|worker|flower}"
+        exit 1
+        ;;
+esac
+EOF
+
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Use user "wagtail" to run the commands
 USER wagtail
 
-# Collect static files.
-RUN python manage.py collectstatic --noinput --clear
+# Set the entrypoint
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
-# Runtime command that executes when "docker run" is called, it does the
-# following:
-#   1. Migrate the database.
-#   2. Start the application server.
-# WARNING:
-#   Migrating database at the same time as starting the server IS NOT THE BEST
-#   PRACTICE. The database should be migrated manually or using the release
-#   phase facilities of your hosting platform. This is used only so the
-#   Wagtail instance can be started with a simple "docker run" command.
-CMD set -xe; python manage.py migrate --noinput; gunicorn cirrus_demo.wsgi:application
+# Default to web mode if no argument is provided
+CMD ["web"]
