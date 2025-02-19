@@ -4,6 +4,11 @@ webapp:
   fqdn: ncote-celery-demo.k8s.ucar.edu
   path: /
   replicaCount: 1
+  volume1:
+    name: campaign
+    server: gladedm1.ucar.edu
+    path: /gpfs/csfs1
+    readOnly: true
   container: 
     image: docker.io/ncote/django-dev:2025-02-14.00.05
     imagePullPolicy: Always

@@ -16,6 +16,7 @@ urlpatterns = [
     path("search/", search_views.search, name="search"),
     path('', views.home, name='home'),
     path('analysis/', views.analysis_view, name='analysis'),
+    path('glade-image/', views.glade_image, name='glade_image'),
     path('trigger-analysis/', views.trigger_analysis, name='trigger_analysis'),
     path('trigger-max-analysis/', views.trigger_max_analysis, name='trigger_max_analysis'),
     path('trigger-sum-analysis/', views.trigger_sum_analysis, name='trigger_sum_analysis'),

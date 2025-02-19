@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare
+from functions import get_glade_picture
 
 def home(request):
     return render(request, 'base.html')
@@ -49,3 +50,7 @@ def check_total_task_status(request, task_id):
 
 def analysis_view(request):
     return render(request, 'analysis.html')
+
+def glade_image(request):
+    image = get_glade_picture()
+    return render(request, 'image.html', image=image)
