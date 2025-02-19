@@ -87,7 +87,7 @@ def get_glade_picture():
         ax.set_ylabel('Miles Per Hour')
         return fig
 
-    MAX_WORKERS = 4
+    MAX_WORKERS = 1
 
     def get_local_cluster():
         """ Create cluster using the Jupyter server's resources
@@ -107,7 +107,7 @@ def get_glade_picture():
     client = Client(cluster)
 
     # Pause notebook execution until some workers have been allocated.
-    min_workers = 2
+    min_workers = 1
     client.wait_for_workers(min_workers)
 
     # This subdirectory contains surface analysis data on a 0.25 degree global grid
