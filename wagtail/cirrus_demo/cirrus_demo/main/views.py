@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+import os
+from pathlib import Path
 from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare
 from .glade_functions import get_glade_picture
 
@@ -54,3 +56,50 @@ def analysis_view(request):
 def glade_image(request):
     image = get_glade_picture()
     return render(request, 'image.html', image=image)
+
+def directory_browser(request):
+    # Base directory to start browsing from
+    base_path = '/glade/campaign/'
+    
+    # Get the current path from query parameters, default to base_path
+    current_path = request.GET.get('path', base_path)
+    
+    # Ensure the path is within the base directory (security measure)
+    if not Path(current_path).resolve().is_relative_to(Path(base_path).resolve()):
+        current_path = base_path
+    
+    try:
+        # Get directories and files
+        items = []
+        for item in os.scandir(current_path):
+            items.append({
+                'name': item.name,
+                'is_dir': item.is_dir(),
+                'path': os.path.join(current_path, item.name)
+            })
+        
+        # Sort items (directories first, then files)
+        items.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+        
+        # Get parent directory
+        parent_path = str(Path(current_path).parent)
+        if not Path(parent_path).resolve().is_relative_to(Path(base_path).resolve()):
+            parent_path = None
+            
+    except PermissionError:
+        items = []
+        parent_path = str(Path(current_path).parent)
+        error_message = "Permission denied to access this directory"
+    except Exception as e:
+        items = []
+        parent_path = str(Path(current_path).parent)
+        error_message = f"Error accessing directory: {str(e)}"
+    
+    context = {
+        'current_path': current_path,
+        'items': items,
+        'parent_path': parent_path,
+        'error_message': error_message if 'error_message' in locals() else None
+    }
+    
+    return render(request, 'directory_browser.html', context)
