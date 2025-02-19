@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare
-from functions import get_glade_picture
+from .glade_functions import get_glade_picture
 
 def home(request):
     return render(request, 'base.html')
