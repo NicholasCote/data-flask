@@ -36,6 +36,9 @@ spec:
         - mountPath: /glade/campaign
           name: {{ .Values.webapp.volume1.name }}
         resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1"
           limits:
-            cpu: '0'
-            memory: '0'
+            memory: "8Gi"
+            cpu: "2"
