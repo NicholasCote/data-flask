@@ -88,69 +88,80 @@ def get_glade_picture():
         return fig
 
     MAX_WORKERS = 1
-
+    
     def get_local_cluster():
-        """ Create cluster using the Jupyter server's resources
-        """
+        """Create cluster with controlled resource usage"""
         from distributed import LocalCluster
-        cluster = LocalCluster()    
-
-        cluster.scale(MAX_WORKERS)
+        
+        cluster = LocalCluster(
+            n_workers=MAX_WORKERS,
+            threads_per_worker=2,
+            memory_limit='4GB',
+            scheduler_port=0,  # Dynamically assign port
+            dashboard_address=':0',  # Dynamically assign dashboard port
+            silence_logs=False,  # Keep logs for debugging
+            processes=True  # Use processes instead of threads
+        )
         return cluster
 
-    # Obtain dask cluster in one of three ways
-
-    cluster = get_local_cluster()
-
-    # Connect to cluster
     from distributed import Client
-    client = Client(cluster)
+    try:
+        # Create cluster and client
+        cluster = get_local_cluster()
+        client = Client(cluster)
+        
+        # Wait for worker with timeout
+        try:
+            client.wait_for_workers(n_workers=1, timeout=30)
+        except TimeoutError:
+            raise RuntimeError("Failed to start Dask workers within timeout period")
 
-    # Pause notebook execution until some workers have been allocated.
-    min_workers = 1
-    client.wait_for_workers(min_workers)
+        # This subdirectory contains surface analysis data on a 0.25 degree global grid
+        data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
 
-    # This subdirectory contains surface analysis data on a 0.25 degree global grid
-    data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
+        # This bash-style pattern will match data for 2021 and 2022.
+        year_month_pattern = '202{1,2}*/'
 
-    # This bash-style pattern will match data for 2021 and 2022.
-    year_month_pattern = '202{1,2}*/'
+        data_spec = data_dir + year_month_pattern
 
-    data_spec = data_dir + year_month_pattern
+        # These filename patterns refer to u- and v-components of winds at 10 meters above the land surface.
+        filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
+        filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
 
-    # These filename patterns refer to u- and v-components of winds at 10 meters above the land surface.
-    filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
-    filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
+        ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=True)
+        ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=True)
 
-    ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=True)
-    ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=True)
+        var_u = 'U10N'
+        var_v = 'V10N'
 
-    var_u = 'U10N'
-    var_v = 'V10N'
+        # Select data for a specific geographic location (Cheyenne, Wyoming).
+        # Note that dataset longitude values are in the range [0, 360]; click the disk icon to the right of 
+        #   "longitude" above to verify.
+        # We convert from longitude values provided by Google in the range [-180, 180] using subtraction.
 
-    # Select data for a specific geographic location (Cheyenne, Wyoming).
-    # Note that dataset longitude values are in the range [0, 360]; click the disk icon to the right of 
-    #   "longitude" above to verify.
-    # We convert from longitude values provided by Google in the range [-180, 180] using subtraction.
+        cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
 
-    cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
+        city = cheyenne
 
-    city = cheyenne
+        # Select the nearest grid cell to our lat/lon location.
+        u = get_point_array(ds_u, city['lat'], city['lon'], var_u)
+        v = get_point_array(ds_v, city['lat'], city['lon'], var_v)
 
-    # Select the nearest grid cell to our lat/lon location.
-    u = get_point_array(ds_u, city['lat'], city['lon'], var_u)
-    v = get_point_array(ds_v, city['lat'], city['lon'], var_v)
+        # Actually load the data into memory.
+        u_values = u.values
+        v_values = v.values
 
-    # Actually load the data into memory.
-    u_values = u.values
-    v_values = v.values
+        figure = plot_winds(u_values, v_values, ds_u.time)
 
-    figure = plot_winds(u_values, v_values, ds_u.time)
+        cur_dir = os.getcwd()
+        plotfile = cur_dir + '/app/static/glade_data_access.png'
+        figure.savefig(plotfile, dpi=100)
 
-    cur_dir = os.getcwd()
-    plotfile = cur_dir + '/app/static/glade_data_access.png'
-    figure.savefig(plotfile, dpi=100)
-
-    cluster.close()
+    finally:
+        # Clean up resources
+        if 'client' in locals():
+            client.close()
+        if 'cluster' in locals():
+            cluster.close()
 
     return '/static/glade_data_access.png'
