@@ -80,7 +80,7 @@ def total_taxi_fare(self):
         raise
 
 @shared_task(bind=True, max_retries=3)
-def taxi_weather_analysis_debug(self):
+def taxi_weather_analysis(self):
     """
     Enhanced version of taxi_weather_analysis with detailed debugging.
     """
