@@ -3,7 +3,7 @@ name: Django CICD Pipeline
 on: 
   push:
     paths:
-      - wagtail/**
+      - wagtail/cirrus_demo/**
     branches:
       - dev
 
