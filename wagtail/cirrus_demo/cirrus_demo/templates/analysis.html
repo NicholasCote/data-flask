@@ -502,7 +502,9 @@
             
             if (result.correlations) {
                 // Sort correlations by absolute value (strongest first)
+                // CHANGE HERE: Filter out null and NaN values
                 const sortedCorrelations = Object.entries(result.correlations)
+                    .filter(([_, value]) => value !== null && !isNaN(value))  // Filter out null or NaN values
                     .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
                 
                 // Take top 5 correlations
@@ -528,8 +530,8 @@
                         
                         // Determine cell color based on correlation strength
                         const cellColor = Math.abs(value) > 0.7 ? 'text-danger' : 
-                                         Math.abs(value) > 0.5 ? 'text-warning' : 
-                                         Math.abs(value) > 0.3 ? 'text-info' : '';
+                                        Math.abs(value) > 0.5 ? 'text-warning' : 
+                                        Math.abs(value) > 0.3 ? 'text-info' : '';
                         
                         row.innerHTML = `
                             <td>${formattedKey}</td>
@@ -558,28 +560,41 @@
                     // Get primary weather variable if available
                     let weatherImpact = 'Data not available';
                     if (sample.weather) {
-                        const weatherVars = Object.entries(sample.weather);
+                        // CHANGE HERE: Filter out null and NaN values
+                        const weatherVars = Object.entries(sample.weather)
+                            .filter(([_, value]) => value !== null && !isNaN(value));
+                        
                         if (weatherVars.length > 0) {
                             // Find temperature or precipitation if available
                             const tempVar = weatherVars.find(([key]) => key.includes('t2m') || key.includes('temp'));
                             const precipVar = weatherVars.find(([key]) => key.includes('tp') || key.includes('precip'));
                             
                             if (tempVar) {
-                                weatherImpact = `Temp: ${tempVar[1].toFixed(1)}°C`;
+                                // CHANGE HERE: Add safety check before calling toFixed
+                                weatherImpact = `Temp: ${typeof tempVar[1] === 'number' ? tempVar[1].toFixed(1) : 'N/A'}°C`;
                             } else if (precipVar) {
-                                weatherImpact = `Precip: ${precipVar[1].toFixed(2)} mm`;
+                                // CHANGE HERE: Add safety check before calling toFixed
+                                weatherImpact = `Precip: ${typeof precipVar[1] === 'number' ? precipVar[1].toFixed(2) : 'N/A'} mm`;
                             } else {
                                 // Just use the first weather variable
-                                weatherImpact = `${weatherVars[0][0]}: ${weatherVars[0][1].toFixed(2)}`;
+                                // CHANGE HERE: Add safety check before calling toFixed
+                                weatherImpact = `${weatherVars[0][0]}: ${typeof weatherVars[0][1] === 'number' ? weatherVars[0][1].toFixed(2) : 'N/A'}`;
                             }
                         }
                     }
                     
+                    // CHANGE HERE: Add safety checks for taxi data values
+                    const rideCount = sample.taxi && sample.taxi.ride_count !== null && !isNaN(sample.taxi.ride_count) ? 
+                        sample.taxi.ride_count : 'N/A';
+                    
+                    const avgFare = sample.taxi && sample.taxi.avg_fare !== null && !isNaN(sample.taxi.avg_fare) ? 
+                        `$${sample.taxi.avg_fare.toFixed(2)}` : 'N/A';
+                    
                     row.innerHTML = `
                         <td>${sample.year}-${sample.month}-${sample.day}</td>
                         <td>${sample.hour}:00</td>
-                        <td>${sample.taxi.ride_count}</td>
-                        <td>$${sample.taxi.avg_fare.toFixed(2)}</td>
+                        <td>${rideCount}</td>
+                        <td>${avgFare}</td>
                         <td>${weatherImpact}</td>
                     `;
                     samplesTable.appendChild(row);

@@ -96,6 +96,9 @@ def taxi_weather_analysis(self):
             if isinstance(obj, np.integer):
                 return int(obj)
             elif isinstance(obj, np.floating):
+                # Handle NaN values
+                if np.isnan(obj):
+                    return None  # Convert NaN to None, which becomes null in JSON
                 return float(obj)
             elif isinstance(obj, np.ndarray):
                 return obj.tolist()
@@ -104,7 +107,7 @@ def taxi_weather_analysis(self):
             elif isinstance(obj, list):
                 return [convert_numpy_types(i) for i in obj]
             elif isinstance(obj, tuple):
-                return tuple(convert_numpy_types(i) for i in obj)
+                return tuple(convert_numpy_types(i) for i in i)
             else:
                 return obj
         
@@ -324,9 +327,13 @@ def taxi_weather_analysis(self):
                 for taxi_col in taxi_columns:
                     for weather_col in weather_columns:
                         try:
-                            if impact_df[taxi_col].notna().sum() > 0 and impact_df[weather_col].notna().sum() > 0:
-                                corr = impact_df[[taxi_col, weather_col]].corr().iloc[0, 1]
-                                correlations[f"{taxi_col}_vs_{weather_col}"] = float(corr)  # Convert to native Python float
+                            # Drop NA values before calculating correlation
+                            valid_data = impact_df[[taxi_col, weather_col]].dropna()
+                            if len(valid_data) > 0:
+                                corr = valid_data.corr().iloc[0, 1]
+                                # Check if the correlation is valid (not NaN)
+                                if not np.isnan(corr):
+                                    correlations[f"{taxi_col}_vs_{weather_col}"] = float(corr)
                         except Exception:
                             continue
             except Exception:
