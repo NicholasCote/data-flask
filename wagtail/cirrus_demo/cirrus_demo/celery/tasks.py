@@ -87,6 +87,7 @@ def taxi_weather_analysis(self):
         import os
         import requests
         import pandas as pd
+        import math
         import logging
         from io import StringIO
         from datetime import datetime, timedelta
@@ -226,7 +227,16 @@ def taxi_weather_analysis(self):
                                 for var in variables:
                                     if var in nyc_weather and hasattr(nyc_weather[var], 'mean'):
                                         mean_val = float(nyc_weather[var].mean().values)
-                                        weather_means[var] = mean_val
+                                        # Only add non-NaN values
+                                        if not math.isnan(mean_val):
+                                            weather_means[var] = mean_val
+                                        else:
+                                            # Option 1: Skip this value
+                                            # pass
+                                            # Option 2: Replace with None (will become null in JSON)
+                                            weather_means[var] = None
+                                            # Option 3: Replace with a default value
+                                            # weather_means[var] = 0
                             else:
                                 # Fallback to global means
                                 weather_means = {var: float(day_weather[var].mean().values) 
