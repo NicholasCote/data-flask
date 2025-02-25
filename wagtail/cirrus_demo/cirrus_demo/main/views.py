@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import os
 from pathlib import Path
-from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare
+from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare, taxi_weather_analysis
 from .glade_functions import get_glade_picture
 
 def home(request):
@@ -18,6 +18,10 @@ def trigger_max_analysis(request):
 
 def trigger_sum_analysis(request):
     task = total_taxi_fare.delay()
+    return JsonResponse({'task_id': str(task.id)})
+
+def trigger_weather_analysis(request):
+    task = taxi_weather_analysis.delay()
     return JsonResponse({'task_id': str(task.id)})
 
 def check_task_status(request, task_id):

@@ -20,6 +20,7 @@ urlpatterns = [
     path('glade-image/', views.glade_image, name='glade_image'),
     path('trigger-analysis/', views.trigger_analysis, name='trigger_analysis'),
     path('trigger-max-analysis/', views.trigger_max_analysis, name='trigger_max_analysis'),
+    path('trigger-weather-analysis/', views.trigger_weather_analysis, name='trigger-weather-analysis'),
     path('trigger-sum-analysis/', views.trigger_sum_analysis, name='trigger_sum_analysis'),
     path('check-task/<str:task_id>/', views.check_task_status, name='check_task_status'),
 ]
