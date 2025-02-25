@@ -10,7 +10,7 @@ webapp:
     path: /gpfs/csfs1
     readOnly: true
   container: 
-    image: docker.io/ncote/django-dev:2025-02-20.17.49
+    image: docker.io/ncote/django-dev:2025-02-25.16.56
     imagePullPolicy: Always
     port: 8000
   storage:
