@@ -40,96 +40,153 @@
                 <strong>Note:</strong> Weather analysis is computationally intensive and may take several minutes to complete. You can still use other features while waiting.
             </div>
             
-            <!-- Average Analysis Results -->
-            <div id="avgResults" class="mt-4" style="display: none;">
-                <h3>Average Analysis Results:</h3>
-                <div class="card">
+            <!-- Active Analysis Section -->
+            <div class="mt-4">
+                <h3>Active Analysis Tasks</h3>
+                
+                <!-- Progress bars for each analysis type -->
+                <div id="basicAnalysisProgress" style="display: none;" class="card mb-3">
                     <div class="card-body">
-                        <p><strong>Average Fare:</strong> $<span id="avgFare"></span></p>
-                        <p><strong>Maximum Trip Distance:</strong> <span id="maxDist"></span> Miles</p>
-                        <p><strong>Total Passengers:</strong> <span id="totalPass"></span></p>
+                        <h5 class="card-title">Basic Taxi Analysis</h5>
+                        <div class="progress">
+                            <div id="basicProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
+                                style="width: 0%">0%</div>
+                        </div>
+                        <p class="text-muted mt-2" id="basicLoadingText">Analysis in progress...</p>
+                    </div>
+                </div>
+                
+                <div id="maxAnalysisProgress" style="display: none;" class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Maximum Fare Analysis</h5>
+                        <div class="progress">
+                            <div id="maxProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
+                                style="width: 0%">0%</div>
+                        </div>
+                        <p class="text-muted mt-2" id="maxLoadingText">Analysis in progress...</p>
+                    </div>
+                </div>
+                
+                <div id="sumAnalysisProgress" style="display: none;" class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Fare Analysis</h5>
+                        <div class="progress">
+                            <div id="sumProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
+                                style="width: 0%">0%</div>
+                        </div>
+                        <p class="text-muted mt-2" id="sumLoadingText">Analysis in progress...</p>
+                    </div>
+                </div>
+                
+                <div id="weatherAnalysisProgress" style="display: none;" class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Weather Impact Analysis</h5>
+                        <div class="progress">
+                            <div id="weatherProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+                                role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
+                                style="width: 0%">0%</div>
+                        </div>
+                        <p class="text-muted mt-2" id="weatherLoadingText">Analysis in progress (this may take several minutes)...</p>
                     </div>
                 </div>
             </div>
             
-            <!-- Maximum Fare Results -->
-            <div id="maxResults" class="mt-4" style="display: none;">
-                <h3>Maximum Fare Analysis Results:</h3>
-                <div class="card">
-                    <div class="card-body">
-                        <p><strong>Maximum Fare:</strong> $<span id="maxFare"></span></p>
+            <!-- Results Section -->
+            <div class="mt-4">
+                <h3>Analysis Results</h3>
+                
+                <!-- Average Analysis Results -->
+                <div id="avgResults" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            Basic Taxi Analysis Results
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Average Fare:</strong> $<span id="avgFare"></span></p>
+                            <p><strong>Maximum Trip Distance:</strong> <span id="maxDist"></span> Miles</p>
+                            <p><strong>Total Passengers:</strong> <span id="totalPass"></span></p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Sum Fare Results -->
-            <div id="sumResults" class="mt-4" style="display: none;">
-                <h3>Total Fare Analysis Results:</h3>
-                <div class="card">
-                    <div class="card-body">
-                        <p><strong>Total Fares:</strong> $<span id="sumFare"></span></p>
+                
+                <!-- Maximum Fare Results -->
+                <div id="maxResults" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            Maximum Fare Analysis Results
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Maximum Fare:</strong> $<span id="maxFare"></span></p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Weather Analysis Results -->
-            <div id="weatherResults" class="mt-4" style="display: none;">
-                <h3>Weather Impact Analysis Results:</h3>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h4>Analysis Summary</h4>
-                                <p><strong>Total Days Analyzed:</strong> <span id="totalDays"></span></p>
-                                <p><strong>Data Points Collected:</strong> <span id="dataPoints"></span></p>
+                
+                <!-- Sum Fare Results -->
+                <div id="sumResults" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            Total Fare Analysis Results
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Total Fares:</strong> $<span id="sumFare"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Weather Analysis Results -->
+                <div id="weatherResults" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            Weather Impact Analysis Results
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4>Analysis Summary</h4>
+                                    <p><strong>Total Days Analyzed:</strong> <span id="totalDays"></span></p>
+                                    <p><strong>Data Points Collected:</strong> <span id="dataPoints"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4>Top Weather Correlations</h4>
+                                    <div id="correlationsList"></div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <h4>Top Weather Correlations</h4>
-                                <div id="correlationsList"></div>
+                            <div class="mt-3">
+                                <h4>Weather Impact Samples</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-sm" id="weatherSamplesTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Hour</th>
+                                                <th>Ride Count</th>
+                                                <th>Avg Fare</th>
+                                                <th>Weather Impact</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Weather sample rows will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-3">
-                            <h4>Weather Impact Samples</h4>
-                            <div class="table-responsive">
-                                <table class="table table-striped table-sm" id="weatherSamplesTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Hour</th>
-                                            <th>Ride Count</th>
-                                            <th>Avg Fare</th>
-                                            <th>Weather Impact</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Weather sample rows will be added here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div id="loading" style="display: none;" class="mt-4">
-                <div class="progress">
-                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                         role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
-                         style="width: 0%">0%</div>
-                </div>
-                <p class="text-muted mt-2" id="loadingText">Analysis in progress...</p>
             </div>
         </div>
         
         <script>
         document.getElementById('analyzeBtn').addEventListener('click', function() {
-            const loadingDiv = document.getElementById('loading');
+            const progressDiv = document.getElementById('basicAnalysisProgress');
             const resultsDiv = document.getElementById('avgResults');
-            const progressBar = document.getElementById('progressBar');
-            const loadingText = document.getElementById('loadingText');
+            const progressBar = document.getElementById('basicProgressBar');
+            const loadingText = document.getElementById('basicLoadingText');
             
-            loadingDiv.style.display = 'block';
-            resultsDiv.style.display = 'none';
+            progressDiv.style.display = 'block';
             loadingText.textContent = 'Basic analysis in progress...';
             
             // Reset progress bar
@@ -164,14 +221,19 @@
                     if (data.status === 'SUCCESS') {
                         clearInterval(progressInterval);
                         
-                        const progressBar = document.getElementById('progressBar');
+                        const progressBar = document.getElementById('basicProgressBar');
                         progressBar.style.width = '100%';
                         progressBar.textContent = 'Complete!';
                         progressBar.setAttribute('aria-valuenow', 100);
                         
                         setTimeout(() => {
-                            document.getElementById('loading').style.display = 'none';
+                            document.getElementById('basicLoadingText').textContent = 'Analysis complete!';
                             document.getElementById('avgResults').style.display = 'block';
+                            
+                            // Hide progress after delay (optional)
+                            setTimeout(() => {
+                                document.getElementById('basicAnalysisProgress').style.display = 'none';
+                            }, 3000);
                         }, 500);
                         
                         console.log('Setting values:', {  // Debug print
@@ -190,17 +252,17 @@
                 .catch(error => {
                     console.error('Error checking status:', error);
                     clearInterval(progressInterval);
+                    document.getElementById('basicLoadingText').textContent = 'Error: ' + error.message;
                 });
         }
         
         document.getElementById('maxAnalyzeBtn').addEventListener('click', function() {
-            const loadingDiv = document.getElementById('loading');
+            const progressDiv = document.getElementById('maxAnalysisProgress');
             const resultsDiv = document.getElementById('maxResults');
-            const progressBar = document.getElementById('progressBar');
-            const loadingText = document.getElementById('loadingText');
+            const progressBar = document.getElementById('maxProgressBar');
+            const loadingText = document.getElementById('maxLoadingText');
             
-            loadingDiv.style.display = 'block';
-            resultsDiv.style.display = 'none';
+            progressDiv.style.display = 'block';
             loadingText.textContent = 'Maximum fare analysis in progress...';
             
             // Reset progress bar
@@ -235,14 +297,19 @@
                     if (data.status === 'SUCCESS') {
                         clearInterval(progressInterval);
                         
-                        const progressBar = document.getElementById('progressBar');
+                        const progressBar = document.getElementById('maxProgressBar');
                         progressBar.style.width = '100%';
                         progressBar.textContent = 'Complete!';
                         progressBar.setAttribute('aria-valuenow', 100);
                         
                         setTimeout(() => {
-                            document.getElementById('loading').style.display = 'none';
+                            document.getElementById('maxLoadingText').textContent = 'Analysis complete!';
                             document.getElementById('maxResults').style.display = 'block';
+                            
+                            // Hide progress after delay (optional)
+                            setTimeout(() => {
+                                document.getElementById('maxAnalysisProgress').style.display = 'none';
+                            }, 3000);
                         }, 500);
                         
                         console.log('Setting values:', {  // Debug print
@@ -257,17 +324,17 @@
                 .catch(error => {
                     console.error('Error checking status:', error);
                     clearInterval(progressInterval);
+                    document.getElementById('maxLoadingText').textContent = 'Error: ' + error.message;
                 });
         }
         
         document.getElementById('sumAnalyzeBtn').addEventListener('click', function() {
-            const loadingDiv = document.getElementById('loading');
+            const progressDiv = document.getElementById('sumAnalysisProgress');
             const resultsDiv = document.getElementById('sumResults');
-            const progressBar = document.getElementById('progressBar');
-            const loadingText = document.getElementById('loadingText');
+            const progressBar = document.getElementById('sumProgressBar');
+            const loadingText = document.getElementById('sumLoadingText');
             
-            loadingDiv.style.display = 'block';
-            resultsDiv.style.display = 'none';
+            progressDiv.style.display = 'block';
             loadingText.textContent = 'Total fare analysis in progress...';
             
             // Reset progress bar
@@ -302,14 +369,19 @@
                     if (data.status === 'SUCCESS') {
                         clearInterval(progressInterval);
                         
-                        const progressBar = document.getElementById('progressBar');
+                        const progressBar = document.getElementById('sumProgressBar');
                         progressBar.style.width = '100%';
                         progressBar.textContent = 'Complete!';
                         progressBar.setAttribute('aria-valuenow', 100);
                         
                         setTimeout(() => {
-                            document.getElementById('loading').style.display = 'none';
+                            document.getElementById('sumLoadingText').textContent = 'Analysis complete!';
                             document.getElementById('sumResults').style.display = 'block';
+                            
+                            // Hide progress after delay (optional)
+                            setTimeout(() => {
+                                document.getElementById('sumAnalysisProgress').style.display = 'none';
+                            }, 3000);
                         }, 500);
                         
                         console.log('Setting values:', {  // Debug print
@@ -324,25 +396,24 @@
                 .catch(error => {
                     console.error('Error checking status:', error);
                     clearInterval(progressInterval);
+                    document.getElementById('sumLoadingText').textContent = 'Error: ' + error.message;
                 });
         }
         
         document.getElementById('weatherAnalyzeBtn').addEventListener('click', function() {
-            const loadingDiv = document.getElementById('loading');
+            const progressDiv = document.getElementById('weatherAnalysisProgress');
             const resultsDiv = document.getElementById('weatherResults');
             const warningDiv = document.getElementById('weatherWarning');
-            const progressBar = document.getElementById('progressBar');
-            const loadingText = document.getElementById('loadingText');
+            const progressBar = document.getElementById('weatherProgressBar');
+            const loadingText = document.getElementById('weatherLoadingText');
             
-            loadingDiv.style.display = 'block';
-            resultsDiv.style.display = 'none';
+            progressDiv.style.display = 'block';
             warningDiv.style.display = 'block';
             loadingText.textContent = 'Weather impact analysis in progress (this may take several minutes)...';
             
             // Reset progress bar
             progressBar.style.width = '0%';
             progressBar.textContent = '0%';
-            progressBar.classList.add('bg-info');
             
             // Simulate slower progress for the long-running task
             let progress = 0;
@@ -381,17 +452,21 @@
                     if (data.status === 'SUCCESS') {
                         clearInterval(progressInterval);
                         
-                        const progressBar = document.getElementById('progressBar');
+                        const progressBar = document.getElementById('weatherProgressBar');
                         progressBar.style.width = '100%';
                         progressBar.textContent = 'Complete!';
                         progressBar.setAttribute('aria-valuenow', 100);
-                        progressBar.classList.remove('bg-info');
                         
                         document.getElementById('weatherWarning').style.display = 'none';
                         
                         setTimeout(() => {
-                            document.getElementById('loading').style.display = 'none';
+                            document.getElementById('weatherLoadingText').textContent = 'Analysis complete!';
                             document.getElementById('weatherResults').style.display = 'block';
+                            
+                            // Hide progress after delay (optional)
+                            setTimeout(() => {
+                                document.getElementById('weatherAnalysisProgress').style.display = 'none';
+                            }, 3000);
                         }, 500);
                         
                         // Display the weather analysis results
@@ -399,12 +474,11 @@
                     } else if (data.status === 'FAILURE') {
                         clearInterval(progressInterval);
                         document.getElementById('weatherWarning').style.display = 'none';
-                        document.getElementById('loadingText').textContent = 'Weather analysis failed. Please try again.';
+                        document.getElementById('weatherLoadingText').textContent = 'Weather analysis failed. Please try again.';
                         
-                        const progressBar = document.getElementById('progressBar');
+                        const progressBar = document.getElementById('weatherProgressBar');
                         progressBar.style.width = '100%';
                         progressBar.textContent = 'Failed';
-                        progressBar.classList.remove('bg-info');
                         progressBar.classList.add('bg-danger');
                     } else {
                         setTimeout(() => checkWeatherStatus(taskId, progressInterval), 2000); // Check less frequently
@@ -413,6 +487,7 @@
                 .catch(error => {
                     console.error('Error checking weather task status:', error);
                     clearInterval(progressInterval);
+                    document.getElementById('weatherLoadingText').textContent = 'Error: ' + error.message;
                 });
         }
         
