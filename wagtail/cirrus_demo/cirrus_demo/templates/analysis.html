@@ -560,26 +560,40 @@
                     // Get primary weather variable if available
                     let weatherImpact = 'Data not available';
                     if (sample.weather) {
-                        // CHANGE HERE: Filter out null and NaN values
-                        const weatherVars = Object.entries(sample.weather)
-                            .filter(([_, value]) => value !== null && !isNaN(value));
-                        
-                        if (weatherVars.length > 0) {
-                            // Find temperature or precipitation if available
-                            const tempVar = weatherVars.find(([key]) => key.includes('t2m') || key.includes('temp'));
-                            const precipVar = weatherVars.find(([key]) => key.includes('tp') || key.includes('precip'));
+                        // Check for the weather_condition field first
+                        if (sample.weather.weather_condition) {
+                            const tempC = sample.weather.temperature_2m_C;
+                            const tempStr = tempC !== null && !isNaN(tempC) ? `${tempC.toFixed(1)}°C` : '';
+                            weatherImpact = `${sample.weather.weather_condition}${tempStr ? ` at ${tempStr}` : ''}`;
+                        }
+                        // If no weather_condition, use temperature and/or precipitation
+                        else {
+                            const tempVar = Object.entries(sample.weather).find(([key]) => 
+                                key.includes('temperature') || key.includes('temp') || key === 't2m');
+                            const precipVar = Object.entries(sample.weather).find(([key]) => 
+                                key.includes('precipitation') || key.includes('precip') || key === 'tp');
                             
-                            if (tempVar) {
-                                // CHANGE HERE: Add safety check before calling toFixed
-                                weatherImpact = `Temp: ${typeof tempVar[1] === 'number' ? tempVar[1].toFixed(1) : 'N/A'}°C`;
-                            } else if (precipVar) {
-                                // CHANGE HERE: Add safety check before calling toFixed
-                                weatherImpact = `Precip: ${typeof precipVar[1] === 'number' ? precipVar[1].toFixed(2) : 'N/A'} mm`;
-                            } else {
-                                // Just use the first weather variable
-                                // CHANGE HERE: Add safety check before calling toFixed
-                                weatherImpact = `${weatherVars[0][0]}: ${typeof weatherVars[0][1] === 'number' ? weatherVars[0][1].toFixed(2) : 'N/A'}`;
+                            let conditionParts = [];
+                            
+                            if (tempVar && tempVar[1] !== null && !isNaN(tempVar[1])) {
+                                conditionParts.push(`${tempVar[1].toFixed(1)}°C`);
                             }
+                            
+                            if (precipVar && precipVar[1] !== null && !isNaN(precipVar[1])) {
+                                const precipAmount = precipVar[1];
+                                let precipDesc = '';
+                                
+                                if (precipAmount > 5) precipDesc = 'Heavy Rain';
+                                else if (precipAmount > 1) precipDesc = 'Moderate Rain';
+                                else if (precipAmount > 0.2) precipDesc = 'Light Rain';
+                                else if (precipAmount > 0) precipDesc = 'Drizzle';
+                                
+                                if (precipDesc) {
+                                    conditionParts.push(precipDesc);
+                                }
+                            }
+                            
+                            weatherImpact = conditionParts.length > 0 ? conditionParts.join(', ') : 'Weather data unavailable';
                         }
                     }
                     
