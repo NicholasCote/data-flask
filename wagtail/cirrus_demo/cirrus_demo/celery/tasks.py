@@ -87,7 +87,6 @@ def taxi_weather_analysis(self):
         import os
         import requests
         import pandas as pd
-        import math
         import logging
         from io import StringIO
         from datetime import datetime, timedelta
@@ -112,74 +111,194 @@ def taxi_weather_analysis(self):
             else:
                 return obj
         
-        # Function to extract and format weather data from ERA5 dataset
-        def extract_era5_weather_data(datasets, time_str, lat_slice, lon_slice):
+        # Function to find relevant ERA5 NetCDF files
+        def find_era5_files(year, month, base_path="/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc"):
             """
-            Extract weather data from multiple ERA5 datasets for a specific time and location.
+            Find relevant ERA5 NetCDF files for weather analysis.
             
             Args:
-                datasets (dict): Dictionary of xarray datasets for different variables
-                time_str (str): Time string in format YYYY-MM-DDThh:00:00
-                lat_slice (slice): Latitude slice
-                lon_slice (slice): Longitude slice
+                year (int): Year to find data for
+                month (int): Month to find data for
+                base_path (str): Base path to ERA5 data
                 
             Returns:
-                dict: Weather data
+                dict: Dictionary mapping variable names to file paths
+            """
+            # Format the directory path for the year and month
+            year_month_dir = f"{base_path}/{year:04d}{month:02d}"
+            
+            # If directory doesn't exist, find the closest available directory
+            if not os.path.exists(year_month_dir):
+                logging.warning(f"Directory {year_month_dir} not found, looking for alternatives")
+                
+                # List all directories in the base path
+                available_dirs = [d for d in os.listdir(base_path) 
+                                if os.path.isdir(os.path.join(base_path, d)) and d.isdigit() and len(d) == 6]
+                
+                if not available_dirs:
+                    raise FileNotFoundError(f"No valid year-month directories found in {base_path}")
+                
+                # Convert to integers for numeric comparison
+                available_ym = [int(d) for d in available_dirs]
+                
+                # Find the closest year-month
+                target_ym = year * 100 + month
+                closest_ym = min(available_ym, key=lambda ym: abs(ym - target_ym))
+                
+                # Update directory path
+                year_month_dir = f"{base_path}/{closest_ym}"
+                logging.info(f"Using alternative directory: {year_month_dir}")
+            
+            # Define key variables we're interested in with their file patterns
+            target_variables = {
+                't2m': '_2t.ll',      # 2m temperature (167)
+                'd2m': '_2d.ll',      # 2m dewpoint (168)
+                'sp': '_sp.ll',       # surface pressure (134)
+                'msl': '_msl.ll',     # mean sea level pressure (151)
+                'u10': '_10u.ll',     # 10m U wind component (165)
+                'v10': '_10v.ll',     # 10m V wind component (166)
+                'tcc': '_tcc.ll',     # total cloud cover (164)
+                'tcw': '_tcw.ll',     # total column water (136)
+                'skt': '_skt.ll'      # skin temperature (235)
+            }
+            
+            # Find the corresponding files
+            found_files = {}
+            
+            files = os.listdir(year_month_dir)
+            nc_files = [f for f in files if f.endswith('.nc')]
+            
+            for var, pattern in target_variables.items():
+                matching_files = [f for f in nc_files if pattern in f]
+                
+                if matching_files:
+                    # Sort by file size (larger files might have more complete data)
+                    matching_files.sort(key=lambda f: os.path.getsize(os.path.join(year_month_dir, f)), reverse=True)
+                    found_files[var] = os.path.join(year_month_dir, matching_files[0])
+                    logging.info(f"Found file for {var}: {matching_files[0]}")
+                else:
+                    logging.warning(f"No file found for variable {var} with pattern {pattern}")
+            
+            if not found_files:
+                raise FileNotFoundError(f"No suitable ERA5 files found in {year_month_dir}")
+            
+            return found_files
+        
+        # Function to extract and format weather data from ERA5 dataset
+        def extract_era5_weather_data(datasets, date_str, lat_slice, lon_slice):
+            """
+            Extract and format weather data from ERA5 datasets for a specific date and region.
+            
+            Args:
+                datasets (dict): Dictionary of variable names to xarray datasets
+                date_str (str): Date string in format YYYY-MM-DDThh:mm:ss
+                lat_slice (slice): Latitude slice for the region of interest
+                lon_slice (slice): Longitude slice for the region of interest
+                
+            Returns:
+                dict: Weather data for the specified date and region
             """
             weather_data = {}
             
-            # Process each dataset
+            # Process each variable dataset
             for var_name, ds in datasets.items():
                 try:
-                    # Get the actual variable name in the dataset
-                    # This might require some mapping or inspection of ds.variables
-                    if var_name == 'temperature':
-                        data_var = 't2m' if 't2m' in ds.variables else '2t'
-                    elif var_name == 'wind_u':
-                        data_var = 'u10' if 'u10' in ds.variables else '10u'
-                    elif var_name == 'wind_v':
-                        data_var = 'v10' if 'v10' in ds.variables else '10v'
-                    elif var_name == 'cloud_cover':
-                        data_var = 'tcc'
-                    elif var_name == 'pressure':
-                        data_var = 'msl'
-                    elif var_name == 'precipitation':
-                        data_var = 'tp'
-                    else:
-                        # Try to find the actual variable
-                        potential_vars = list(ds.variables.keys())
-                        # Skip coordinate variables
-                        potential_vars = [v for v in potential_vars if v not in ['time', 'latitude', 'longitude', 'lat', 'lon']]
-                        if potential_vars:
-                            data_var = potential_vars[0]
-                        else:
-                            logging.warning(f"No suitable variable found in dataset for {var_name}")
-                            continue
+                    # Identify coordinate names (they can vary between datasets)
+                    lat_names = [coord for coord in ds.coords if coord.lower() in ('latitude', 'lat')]
+                    lon_names = [coord for coord in ds.coords if coord.lower() in ('longitude', 'lon')]
                     
-                    # Select data for the specific time and region
-                    try:
-                        data = ds[data_var].sel(time=time_str, latitude=lat_slice, longitude=lon_slice)
+                    if lat_names and lon_names:
+                        lat_name, lon_name = lat_names[0], lon_names[0]
                         
-                        # Calculate average for the region
-                        avg_value = float(data.mean().values)
-                        weather_data[var_name] = avg_value
+                        # Create selection dict for the region
+                        selection = {
+                            lat_name: lat_slice,
+                            lon_name: lon_slice
+                        }
                         
-                    except Exception as e:
-                        logging.warning(f"Error extracting {var_name} data: {e}")
-                        # Try alternate time dimension name if initial selection fails
-                        try:
-                            if 'time' not in ds.dims and 'step' in ds.dims:
-                                # Some ERA5 files use 'step' instead of 'time'
-                                data = ds[data_var].sel(step=time_str, latitude=lat_slice, longitude=lon_slice)
-                                avg_value = float(data.mean().values)
-                                weather_data[var_name] = avg_value
-                        except Exception as e2:
-                            logging.warning(f"Also failed with alternate time dimension: {e2}")
-                            weather_data[var_name] = None
-                
+                        # Select region first, then time
+                        regional_ds = ds.sel(**selection)
+                        var_data = regional_ds.sel(time=date_str, method="nearest")
+                        
+                        # Get the data variable (usually has the same name as the file)
+                        if var_name in var_data.data_vars:
+                            data_var = var_data[var_name]
+                        else:
+                            # Try to find the most relevant data variable
+                            data_vars = list(var_data.data_vars.keys())
+                            if len(data_vars) > 0:
+                                data_var = var_data[data_vars[0]]
+                            else:
+                                continue
+                        
+                        # Calculate mean value for the region
+                        if hasattr(data_var, 'mean'):
+                            mean_val = float(data_var.mean().values)
+                            
+                            # Skip NaN values
+                            if not np.isnan(mean_val):
+                                # Process values based on variable type
+                                if var_name == 't2m' or var_name == 'd2m' or var_name == 'skt':
+                                    # Convert from Kelvin to Celsius
+                                    mean_val = mean_val - 273.15
+                                elif var_name == 'sp' or var_name == 'msl':
+                                    # Convert from Pa to hPa
+                                    mean_val = mean_val / 100.0
+                                elif var_name == 'tcc':
+                                    # Convert from 0-1 to percentage
+                                    mean_val = mean_val * 100.0
+                                
+                                # Use readable names
+                                variable_mapping = {
+                                    't2m': 'temperature_2m_C',
+                                    'tp': 'total_precipitation_mm',
+                                    'sp': 'surface_pressure_hPa',
+                                    'msl': 'mean_sea_level_pressure_hPa',
+                                    'u10': 'wind_u_component_10m_ms',
+                                    'v10': 'wind_v_component_10m_ms',
+                                    'tcc': 'total_cloud_cover_percent',
+                                    'tcw': 'total_column_water_kg_m2',
+                                    'd2m': 'dewpoint_2m_C',
+                                    'skt': 'skin_temperature_C'
+                                }
+                                
+                                readable_name = variable_mapping.get(var_name, var_name)
+                                weather_data[readable_name] = round(mean_val, 2)
+                    
                 except Exception as e:
-                    logging.warning(f"Error processing {var_name}: {e}")
-                    weather_data[var_name] = None
+                    logging.warning(f"Error processing variable {var_name}: {e}")
+            
+            # Calculate derived metrics if possible
+            try:
+                if 'wind_u_component_10m_ms' in weather_data and 'wind_v_component_10m_ms' in weather_data:
+                    u = weather_data['wind_u_component_10m_ms']
+                    v = weather_data['wind_v_component_10m_ms']
+                    # Calculate wind speed
+                    weather_data['wind_speed_ms'] = round(np.sqrt(u**2 + v**2), 2)
+                    # Calculate wind direction (meteorological convention)
+                    weather_data['wind_direction_degrees'] = round(np.degrees(np.arctan2(-u, -v)), 2) % 360
+            except Exception as e:
+                logging.warning(f"Error calculating wind metrics: {e}")
+            
+            # Add categorical description of weather if possible
+            try:
+                if 'temperature_2m_C' in weather_data:
+                    temp = weather_data['temperature_2m_C']
+                    cloud = weather_data.get('total_cloud_cover_percent', 50)
+                    
+                    # Simple weather condition classification
+                    if cloud > 80:
+                        condition = "Overcast"
+                    elif cloud > 50:
+                        condition = "Mostly Cloudy"
+                    elif cloud > 20:
+                        condition = "Partly Cloudy"
+                    else:
+                        condition = "Clear"
+                    
+                    weather_data['weather_condition'] = condition
+            except Exception as e:
+                logging.warning(f"Error determining weather condition: {e}")
             
             return weather_data
         
@@ -208,67 +327,6 @@ def taxi_weather_analysis(self):
         # Step 2: Process ERA5 data
         era5_base_path = "/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc"
         
-        # Function to find the closest ERA5 file
-        def find_closest_era5_file(year, month, variables):
-            """
-            Find ERA5 files for specific variables for a given year and month.
-            
-            Args:
-                year (int): The year
-                month (int): The month
-                variables (dict): Dictionary mapping variable names to their ERA5 codes
-                                e.g. {'temperature': '2t', 'wind_u': '10u'}
-            
-            Returns:
-                dict: Dictionary mapping variable names to file paths
-            """
-            # Format year and month as directory
-            year_month_dir = f"{era5_base_path}/{year:04d}{month:02d}/"
-            
-            # Check if directory exists
-            if not os.path.exists(year_month_dir):
-                # Find available years (assuming YYYYMM format directories)
-                all_dirs = os.listdir(era5_base_path)
-                available_dirs = [d for d in all_dirs if d.isdigit() and len(d) == 6]
-                
-                if not available_dirs:
-                    raise FileNotFoundError(f"No valid data directories found in {era5_base_path}")
-                
-                # Find closest year-month
-                target_ym = year * 100 + month
-                available_yms = [int(d) for d in available_dirs]
-                closest_ym = min(available_yms, key=lambda ym: abs(ym - target_ym))
-                
-                year_month_dir = f"{era5_base_path}/{closest_ym:06d}/"
-                logging.info(f"Using closest available data from {closest_ym:06d} instead of {year:04d}{month:02d}")
-            
-            # Dictionary to store files for each variable
-            variable_files = {}
-            
-            # List all files in the directory
-            try:
-                files = os.listdir(year_month_dir)
-            except OSError as e:
-                logging.error(f"Error accessing directory {year_month_dir}: {e}")
-                return variable_files
-            
-            # Match files for each variable
-            for var_name, var_code in variables.items():
-                matching_files = [f for f in files 
-                                if f"_{var_code}." in f or f"_{var_code}_" in f 
-                                and f.endswith(".nc")]
-                
-                if matching_files:
-                    # Sort to ensure consistent selection and take the most appropriate file
-                    # Using the highest resolution file (usually the largest)
-                    matching_files.sort(key=lambda x: os.path.getsize(os.path.join(year_month_dir, x)), reverse=True)
-                    variable_files[var_name] = os.path.join(year_month_dir, matching_files[0])
-                    logging.info(f"Found {var_name} file: {matching_files[0]}")
-                else:
-                    logging.warning(f"No file found for {var_name} (code: {var_code}) in {year_month_dir}")
-            
-            return variable_files
-        
         # Determine unique year-months in taxi data
         unique_dates = df[['year', 'month']].drop_duplicates().values
         
@@ -278,112 +336,78 @@ def taxi_weather_analysis(self):
         # NYC bounding box for weather data
         nyc_lat_slice = slice(40.5, 41.0)
         nyc_lon_slice = slice(-74.3, -73.7)
-        # Define variables needed for your analysis with their ERA5 codes
-        required_variables = {
-            'temperature': '2t',       # 2m temperature
-            'wind_u': '10u',           # 10m U wind component 
-            'wind_v': '10v',           # 10m V wind component
-            'cloud_cover': 'tcc',      # Total cloud cover
-            'pressure': 'msl',         # Mean sea level pressure
-            'precipitation': 'tp'      # Total precipitation (if available)
-        }
-
+        
         # Process each year-month
         for year, month in unique_dates:
-            # Find appropriate ERA5 file
             try:
-                era5_file = find_closest_era5_file(year, month, required_variables)
-                logging.info(f"Processing ERA5 file: {era5_file}")
+                # Find appropriate ERA5 files for this month
+                era5_files = find_era5_files(year, month, era5_base_path)
+                logging.info(f"Found {len(era5_files)} ERA5 files for {year}-{month}")
                 
-                # Open the dataset
-                ds = xr.open_dataset(era5_file)
+                # Open each dataset
+                datasets = {}
+                for var_name, file_path in era5_files.items():
+                    try:
+                        datasets[var_name] = xr.open_dataset(file_path)
+                    except Exception as e:
+                        logging.warning(f"Failed to open dataset {var_name} from {file_path}: {e}")
                 
                 # Get taxi data for this month
                 taxi_month = df[(df['year'] == year) & (df['month'] == month)]
                 
-                # Aggregate data
+                # Aggregate data by day and hour
                 daily_stats = taxi_month.groupby(['day', 'hour']).agg({
                     'fare_amount': ['mean', 'count'],
                     'trip_distance': ['mean'],
                     'trip_time_in_secs': ['mean']
                 }).reset_index()
                 
-                # Process each day
-                for day, day_group in daily_stats.groupby('day'):
+                # Process each day and hour
+                for _, row in daily_stats.iterrows():
                     try:
-                        # Format date for xarray selection
-                        date_str = f"{year}-{month:02d}-{day:02d}"
+                        day = row['day']
+                        hour = row['hour']
                         
-                        # Process each hour
-                        for hour, hour_data in day_group.groupby('hour'):
-                            try:
-                                # Extract weather data for this day
-                                # Format datetime for ERA5 selection
-                                hour_date_str = f"{date_str}T{hour:02d}:00:00"
-                                
-                                # Get weather data for this hour
-                                weather_data = extract_era5_weather_data(ds, hour_date_str, nyc_lat_slice, nyc_lon_slice)
-                                
-                                # Extract taxi metrics
-                                try:
-                                    # Convert tuple column names to strings for compatibility
-                                    columns_dict = {}
-                                    for col in hour_data.columns:
-                                        if isinstance(col, tuple) and len(col) == 2:
-                                            if col[0] == 'fare_amount' and col[1] == 'count':
-                                                columns_dict['ride_count'] = hour_data[col].values[0]
-                                            elif col[0] == 'fare_amount' and col[1] == 'mean':
-                                                columns_dict['avg_fare'] = hour_data[col].values[0]
-                                            elif col[0] == 'trip_distance' and col[1] == 'mean':
-                                                columns_dict['avg_distance'] = hour_data[col].values[0]
-                                            elif col[0] == 'trip_time_in_secs' and col[1] == 'mean':
-                                                columns_dict['avg_trip_time'] = hour_data[col].values[0]
-                                    
-                                    taxi_metrics = {
-                                        'ride_count': columns_dict.get('ride_count', 0),
-                                        'avg_fare': columns_dict.get('avg_fare', 0),
-                                        'avg_distance': columns_dict.get('avg_distance', 0),
-                                        'avg_trip_time': columns_dict.get('avg_trip_time', 0)
-                                    }
-                                except Exception as e:
-                                    logging.warning(f"Error extracting taxi metrics: {e}")
-                                    # Fallback with empty metrics
-                                    taxi_metrics = {
-                                        'ride_count': 0,
-                                        'avg_fare': 0,
-                                        'avg_distance': 0,
-                                        'avg_trip_time': 0
-                                    }
-                                
-                                # Create readable date string
-                                date_time_str = f"{year}-{month:02d}-{day:02d} {hour:02d}:00"
-                                
-                                # Combine with weather data
-                                result = {
-                                    'year': int(year),
-                                    'month': int(month),
-                                    'day': int(day),
-                                    'hour': int(hour),
-                                    'taxi': taxi_metrics,
-                                    'weather': weather_data,
-                                    'date_str': date_time_str
-                                }
-                                
-                                weather_impacts.append(result)
-                                
-                            except Exception as e:
-                                logging.warning(f"Error processing hour {hour}: {e}")
-                                continue
+                        # Format datetime for ERA5 selection
+                        date_str = f"{year}-{month:02d}-{day:02d}T{hour:02d}:00:00"
+                        
+                        # Get weather data for this hour
+                        weather_data = extract_era5_weather_data(datasets, date_str, nyc_lat_slice, nyc_lon_slice)
+                        
+                        # Extract taxi metrics - handle MultiIndex columns from groupby.agg()
+                        taxi_metrics = {
+                            'ride_count': row[('fare_amount', 'count')],
+                            'avg_fare': row[('fare_amount', 'mean')],
+                            'avg_distance': row[('trip_distance', 'mean')],
+                            'avg_trip_time': row[('trip_time_in_secs', 'mean')]
+                        }
+                        
+                        # Create readable date string
+                        date_time_str = f"{year}-{month:02d}-{day:02d} {hour:02d}:00"
+                        
+                        # Combine with weather data
+                        result = {
+                            'year': int(year),
+                            'month': int(month),
+                            'day': int(day),
+                            'hour': int(hour),
+                            'taxi': taxi_metrics,
+                            'weather': weather_data,
+                            'date_str': date_time_str
+                        }
+                        
+                        weather_impacts.append(result)
                         
                     except Exception as e:
-                        logging.warning(f"Error processing day {day}: {e}")
+                        logging.warning(f"Error processing data for {year}-{month}-{day} {hour}:00: {e}")
                         continue
                 
-                # Close the dataset to free memory
-                ds.close()
+                # Close datasets to free memory
+                for ds in datasets.values():
+                    ds.close()
                 
             except Exception as e:
-                logging.warning(f"Error processing ERA5 file for {year}-{month}: {e}")
+                logging.warning(f"Error processing ERA5 files for {year}-{month}: {e}")
                 continue
         
         # Calculate correlations
@@ -500,7 +524,6 @@ def taxi_weather_analysis(self):
         }
         
         result = convert_numpy_types(result)
-
         return result
     
     except Exception as exc:
