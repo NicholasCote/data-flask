@@ -130,12 +130,14 @@ def taxi_weather_analysis(self):
                     # Create selection dict for the region
                     selection = {
                         lat_name: lat_slice,
-                        lon_name: lon_slice,
-                        'time': date_str
+                        lon_name: lon_slice
                     }
                     
-                    # Get the regional subset
-                    regional_weather = ds.sel(**selection, method="nearest")
+                    # First select the region with slices (without method parameter)
+                    regional_ds = ds.sel(**selection)
+                    
+                    # Then select the time with method="nearest"
+                    regional_weather = regional_ds.sel(time=date_str, method="nearest")
                 else:
                     # Fallback to just time selection if coordinates aren't as expected
                     regional_weather = ds.sel(time=date_str, method="nearest")
