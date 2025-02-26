@@ -108,11 +108,137 @@ def taxi_weather_analysis(self):
             elif isinstance(obj, list):
                 return [convert_numpy_types(i) for i in obj]
             elif isinstance(obj, tuple):
-                return tuple(convert_numpy_types(i) for i in i)
+                return tuple(convert_numpy_types(i) for i in obj)
             else:
                 return obj
         
-        # Rest of your code remains the same...
+        # Function to extract and format weather data from ERA5 dataset
+        def extract_era5_weather_data(ds, date_str, lat_slice, lon_slice):
+            """
+            Extract and format weather data from an ERA5 dataset for a specific date and region.
+            Returns a dictionary with named weather metrics and their values.
+            """
+            # Get the region-specific data
+            try:
+                # Identify actual coordinate names in the dataset
+                lat_names = [coord for coord in ds.coords if coord.lower() in ('latitude', 'lat')]
+                lon_names = [coord for coord in ds.coords if coord.lower() in ('longitude', 'lon')]
+                
+                if lat_names and lon_names:
+                    lat_name, lon_name = lat_names[0], lon_names[0]
+                    
+                    # Create selection dict for the region
+                    selection = {
+                        lat_name: lat_slice,
+                        lon_name: lon_slice,
+                        'time': date_str
+                    }
+                    
+                    # Get the regional subset
+                    regional_weather = ds.sel(**selection, method="nearest")
+                else:
+                    # Fallback to just time selection if coordinates aren't as expected
+                    regional_weather = ds.sel(time=date_str, method="nearest")
+            except Exception as e:
+                logging.warning(f"Error extracting regional data: {e}")
+                # Fallback to just time selection
+                regional_weather = ds.sel(time=date_str, method="nearest")
+            
+            # Create a more readable weather dictionary with meaningful names
+            weather_data = {}
+            
+            # Map of common ERA5 variable codes to more readable names
+            variable_mapping = {
+                't2m': 'temperature_2m_C',  # 2m temperature
+                'tp': 'total_precipitation_mm',  # Total precipitation
+                'sp': 'surface_pressure_hPa',  # Surface pressure
+                'msl': 'mean_sea_level_pressure_hPa',  # Mean sea level pressure
+                'u10': 'wind_u_component_10m_ms',  # 10m U wind component
+                'v10': 'wind_v_component_10m_ms',  # 10m V wind component
+                'tcc': 'total_cloud_cover_percent',  # Total cloud cover
+                'tcw': 'total_column_water_kg_m2',  # Total column water
+                'r': 'relative_humidity_percent',  # Relative humidity
+                'skt': 'skin_temperature_K',  # Skin temperature
+                'd2m': 'dewpoint_2m_C',  # 2m dewpoint temperature
+            }
+            
+            # Process each variable in the dataset
+            for var_name in regional_weather.data_vars:
+                try:
+                    # Get the data
+                    var_data = regional_weather[var_name]
+                    
+                    # Calculate mean value for the region
+                    if hasattr(var_data, 'mean'):
+                        mean_val = float(var_data.mean().values)
+                        
+                        # Skip NaN values
+                        if not np.isnan(mean_val):
+                            # Convert units for specific variables
+                            if var_name == 't2m' or var_name == 'd2m':
+                                # Convert from Kelvin to Celsius
+                                mean_val = mean_val - 273.15
+                            elif var_name == 'sp' or var_name == 'msl':
+                                # Convert from Pa to hPa
+                                mean_val = mean_val / 100.0
+                            elif var_name == 'tcc':
+                                # Convert from 0-1 to percentage
+                                mean_val = mean_val * 100.0
+                            elif var_name == 'tp':
+                                # Convert to mm (sometimes needed)
+                                mean_val = mean_val * 1000.0
+                            
+                            # Use readable name if available, otherwise use original
+                            readable_name = variable_mapping.get(var_name, var_name)
+                            weather_data[readable_name] = round(mean_val, 2)
+                except Exception as e:
+                    logging.warning(f"Error processing variable {var_name}: {e}")
+            
+            # Calculate derived metrics if possible
+            try:
+                if 'wind_u_component_10m_ms' in weather_data and 'wind_v_component_10m_ms' in weather_data:
+                    u = weather_data['wind_u_component_10m_ms']
+                    v = weather_data['wind_v_component_10m_ms']
+                    # Calculate wind speed
+                    weather_data['wind_speed_ms'] = round(np.sqrt(u**2 + v**2), 2)
+                    # Calculate wind direction (meteorological convention)
+                    weather_data['wind_direction_degrees'] = round(np.degrees(np.arctan2(-u, -v)), 2) % 360
+            except Exception as e:
+                logging.warning(f"Error calculating wind metrics: {e}")
+            
+            # Add categorical description of weather if possible
+            try:
+                if 'temperature_2m_C' in weather_data:
+                    temp = weather_data['temperature_2m_C']
+                    precip = weather_data.get('total_precipitation_mm', 0)
+                    cloud = weather_data.get('total_cloud_cover_percent', 50)
+                    
+                    # Simple weather condition classification
+                    if precip > 5:
+                        condition = "Heavy Rain"
+                    elif precip > 1:
+                        condition = "Moderate Rain"
+                    elif precip > 0.2:
+                        condition = "Light Rain"
+                    elif cloud > 80:
+                        condition = "Overcast"
+                    elif cloud > 50:
+                        condition = "Mostly Cloudy"
+                    elif cloud > 20:
+                        condition = "Partly Cloudy"
+                    else:
+                        condition = "Clear"
+                    
+                    # Add snow classification if temperature is near or below freezing
+                    if temp < 2 and precip > 0.1:
+                        condition = condition.replace("Rain", "Snow/Sleet")
+                    
+                    weather_data['weather_condition'] = condition
+            except Exception as e:
+                logging.warning(f"Error determining weather condition: {e}")
+            
+            return weather_data
+        
         # Step 1: Download and process taxi data
         url = "https://github.com/dotnet/machinelearning/raw/refs/heads/main/test/data/taxi-fare-train.csv"
         
@@ -168,17 +294,19 @@ def taxi_weather_analysis(self):
         # Initialize results
         weather_impacts = []
         
+        # NYC bounding box for weather data
+        nyc_lat_slice = slice(40.5, 41.0)
+        nyc_lon_slice = slice(-74.3, -73.7)
+        
         # Process each year-month
         for year, month in unique_dates:
             # Find appropriate ERA5 file
             try:
                 era5_file = find_closest_era5_file(year, month)
+                logging.info(f"Processing ERA5 file: {era5_file}")
                 
                 # Open the dataset
                 ds = xr.open_dataset(era5_file)
-                
-                # Extract variables
-                variables = list(ds.data_vars)
                 
                 # Get taxi data for this month
                 taxi_month = df[(df['year'] == year) & (df['month'] == month)]
@@ -190,118 +318,82 @@ def taxi_weather_analysis(self):
                     'trip_time_in_secs': ['mean']
                 }).reset_index()
                 
-                # Add a count column if it doesn't exist
-                if 'count' not in taxi_month.columns:
-                    daily_stats[('count', 'sum')] = daily_stats[('fare_amount', 'count')]
-                
                 # Process each day
-                day_results = []
                 for day, day_group in daily_stats.groupby('day'):
                     try:
                         # Format date for xarray selection
                         date_str = f"{year}-{month:02d}-{day:02d}"
                         
-                        # Extract weather data for this day
-                        day_weather = ds.sel(time=date_str, method="nearest")
-                        
-                        # Try to get NYC region data - handle different coordinate naming
-                        try:
-                            # Identify actual coordinate names in the dataset
-                            lat_names = [coord for coord in ds.coords if coord.lower() in ('latitude', 'lat')]
-                            lon_names = [coord for coord in ds.coords if coord.lower() in ('longitude', 'lon')]
-                            
-                            if lat_names and lon_names:
-                                lat_name, lon_name = lat_names[0], lon_names[0]
-                                
-                                # Approximate NYC bounding box
-                                nyc_bounds = {
-                                    lat_name: slice(40.5, 41.0),
-                                    lon_name: slice(-74.3, -73.7)
-                                }
-                                
-                                # Subset to NYC region
-                                nyc_weather = day_weather.sel(**nyc_bounds)
-                                
-                                # Calculate weather means
-                                weather_means = {}
-                                for var in variables:
-                                    if var in nyc_weather and hasattr(nyc_weather[var], 'mean'):
-                                        mean_val = float(nyc_weather[var].mean().values)
-                                        # Only add non-NaN values
-                                        if not math.isnan(mean_val):
-                                            weather_means[var] = mean_val
-                                        else:
-                                            # Option 1: Skip this value
-                                            # pass
-                                            # Option 2: Replace with None (will become null in JSON)
-                                            weather_means[var] = None
-                                            # Option 3: Replace with a default value
-                                            # weather_means[var] = 0
-                            else:
-                                # Fallback to global means
-                                weather_means = {var: float(day_weather[var].mean().values) 
-                                               for var in variables if var in day_weather and hasattr(day_weather[var], 'mean')}
-                        except Exception:
-                            # Fallback to global means
-                            weather_means = {var: float(day_weather[var].mean().values) 
-                                           for var in variables if var in day_weather and hasattr(day_weather[var], 'mean')}
-                        
                         # Process each hour
                         for hour, hour_data in day_group.groupby('hour'):
-                            # Extract taxi metrics with careful handling
                             try:
-                                # Convert tuple column names to strings for compatibility
-                                columns_dict = {}
-                                for col in hour_data.columns:
-                                    if isinstance(col, tuple) and len(col) == 2:
-                                        if col[0] == 'fare_amount' and col[1] == 'count':
-                                            columns_dict['ride_count'] = hour_data[col].values[0]
-                                        elif col[0] == 'fare_amount' and col[1] == 'mean':
-                                            columns_dict['avg_fare'] = hour_data[col].values[0]
-                                        elif col[0] == 'trip_distance' and col[1] == 'mean':
-                                            columns_dict['avg_distance'] = hour_data[col].values[0]
-                                        elif col[0] == 'trip_time_in_secs' and col[1] == 'mean':
-                                            columns_dict['avg_trip_time'] = hour_data[col].values[0]
-                                        elif col[0] == 'count' and col[1] == 'sum':
-                                            columns_dict['total_count'] = hour_data[col].values[0]
+                                # Extract weather data for this day
+                                # Format datetime for ERA5 selection
+                                hour_date_str = f"{date_str}T{hour:02d}:00:00"
                                 
-                                taxi_metrics = {
-                                    'ride_count': columns_dict.get('ride_count', 0),
-                                    'avg_fare': columns_dict.get('avg_fare', 0),
-                                    'avg_distance': columns_dict.get('avg_distance', 0),
-                                    'avg_trip_time': columns_dict.get('avg_trip_time', 0),
-                                    'total_count': columns_dict.get('total_count', columns_dict.get('ride_count', 0))
+                                # Get weather data for this hour
+                                weather_data = extract_era5_weather_data(ds, hour_date_str, nyc_lat_slice, nyc_lon_slice)
+                                
+                                # Extract taxi metrics
+                                try:
+                                    # Convert tuple column names to strings for compatibility
+                                    columns_dict = {}
+                                    for col in hour_data.columns:
+                                        if isinstance(col, tuple) and len(col) == 2:
+                                            if col[0] == 'fare_amount' and col[1] == 'count':
+                                                columns_dict['ride_count'] = hour_data[col].values[0]
+                                            elif col[0] == 'fare_amount' and col[1] == 'mean':
+                                                columns_dict['avg_fare'] = hour_data[col].values[0]
+                                            elif col[0] == 'trip_distance' and col[1] == 'mean':
+                                                columns_dict['avg_distance'] = hour_data[col].values[0]
+                                            elif col[0] == 'trip_time_in_secs' and col[1] == 'mean':
+                                                columns_dict['avg_trip_time'] = hour_data[col].values[0]
+                                    
+                                    taxi_metrics = {
+                                        'ride_count': columns_dict.get('ride_count', 0),
+                                        'avg_fare': columns_dict.get('avg_fare', 0),
+                                        'avg_distance': columns_dict.get('avg_distance', 0),
+                                        'avg_trip_time': columns_dict.get('avg_trip_time', 0)
+                                    }
+                                except Exception as e:
+                                    logging.warning(f"Error extracting taxi metrics: {e}")
+                                    # Fallback with empty metrics
+                                    taxi_metrics = {
+                                        'ride_count': 0,
+                                        'avg_fare': 0,
+                                        'avg_distance': 0,
+                                        'avg_trip_time': 0
+                                    }
+                                
+                                # Create readable date string
+                                date_time_str = f"{year}-{month:02d}-{day:02d} {hour:02d}:00"
+                                
+                                # Combine with weather data
+                                result = {
+                                    'year': int(year),
+                                    'month': int(month),
+                                    'day': int(day),
+                                    'hour': int(hour),
+                                    'taxi': taxi_metrics,
+                                    'weather': weather_data,
+                                    'date_str': date_time_str
                                 }
-                            except Exception:
-                                # Fallback with empty metrics
-                                taxi_metrics = {
-                                    'ride_count': 0,
-                                    'avg_fare': 0,
-                                    'avg_distance': 0,
-                                    'avg_trip_time': 0,
-                                    'total_count': 0
-                                }
-                            
-                            # Combine with weather data
-                            result = {
-                                'year': int(year),  # Convert numpy types to native Python types
-                                'month': int(month),
-                                'day': int(day),
-                                'hour': int(hour),
-                                'taxi': taxi_metrics,
-                                'weather': weather_means
-                            }
-                            
-                            day_results.append(result)
-                    except Exception:
+                                
+                                weather_impacts.append(result)
+                                
+                            except Exception as e:
+                                logging.warning(f"Error processing hour {hour}: {e}")
+                                continue
+                        
+                    except Exception as e:
+                        logging.warning(f"Error processing day {day}: {e}")
                         continue
-                
-                weather_impacts.extend(day_results)
                 
                 # Close the dataset to free memory
                 ds.close()
                 
-            except Exception:
+            except Exception as e:
+                logging.warning(f"Error processing ERA5 file for {year}-{month}: {e}")
                 continue
         
         # Calculate correlations
@@ -344,20 +436,77 @@ def taxi_weather_analysis(self):
                                 # Check if the correlation is valid (not NaN)
                                 if not np.isnan(corr):
                                     correlations[f"{taxi_col}_vs_{weather_col}"] = float(corr)
-                        except Exception:
+                        except Exception as e:
+                            logging.warning(f"Error calculating correlation for {taxi_col} vs {weather_col}: {e}")
                             continue
-            except Exception:
-                pass
+                
+                # Get top correlations
+                top_correlations = []
+                if correlations:
+                    # Sort correlations by absolute value
+                    sorted_correlations = sorted(correlations.items(), key=lambda x: abs(x[1]), reverse=True)
+                    # Take top 10
+                    top_correlations = sorted_correlations[:10]
+                
+                # Calculate weather statistics
+                weather_stats = {}
+                all_weather_vars = set()
+                for impact in weather_impacts:
+                    all_weather_vars.update(impact.get('weather', {}).keys())
+                
+                # Calculate min, max, mean for each weather variable
+                for var in all_weather_vars:
+                    values = [impact['weather'].get(var) for impact in weather_impacts 
+                             if var in impact.get('weather', {}) and impact['weather'].get(var) is not None]
+                    if values:
+                        weather_stats[var] = {
+                            'min': min(values),
+                            'max': max(values),
+                            'mean': sum(values) / len(values),
+                            'count': len(values)
+                        }
+                
+                # Calculate taxi metrics statistics
+                taxi_stats = {}
+                for metric in taxi_columns:
+                    values = [impact['taxi'].get(metric) for impact in weather_impacts 
+                             if metric in impact.get('taxi', {}) and impact['taxi'].get(metric) is not None]
+                    if values:
+                        taxi_stats[metric] = {
+                            'min': min(values),
+                            'max': max(values),
+                            'mean': sum(values) / len(values)
+                        }
+                
+                # Count occurrences of different weather conditions
+                weather_condition_counts = {}
+                for impact in weather_impacts:
+                    condition = impact.get('weather', {}).get('weather_condition')
+                    if condition:
+                        weather_condition_counts[condition] = weather_condition_counts.get(condition, 0) + 1
+                
+            except Exception as e:
+                logging.error(f"Error in correlation analysis: {e}")
         
         # Apply the conversion function to ensure all NumPy types are converted
         weather_impacts = convert_numpy_types(weather_impacts)
         correlations = convert_numpy_types(correlations)
         
-        # Return results with all NumPy types converted to Python native types
+        # Return more informative results
         return {
-            'weather_impact_samples': weather_impacts[:100],  # Limit to first 100 for reasonable response size
+            'weather_impact_samples': weather_impacts[:15],  # First 15 samples
             'correlations': correlations,
-            'total_days_analyzed': len(weather_impacts)
+            'top_correlations': dict(top_correlations) if 'top_correlations' in locals() else {},
+            'total_days_analyzed': len(set([(impact['year'], impact['month'], impact['day']) 
+                                          for impact in weather_impacts])),
+            'total_hours_analyzed': len(weather_impacts),
+            'weather_variables_found': list(all_weather_vars) if 'all_weather_vars' in locals() else [],
+            'weather_statistics': weather_stats if 'weather_stats' in locals() else {},
+            'taxi_statistics': taxi_stats if 'taxi_stats' in locals() else {},
+            'analysis_summary': {
+                'strongest_weather_effect': dict([top_correlations[0]]) if 'top_correlations' in locals() and top_correlations else None,
+                'weather_condition_counts': weather_condition_counts if 'weather_condition_counts' in locals() else {}
+            }
         }
         
     except Exception as exc:
