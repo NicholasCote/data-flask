@@ -124,6 +124,10 @@ def taxi_weather_analysis(self):
             Returns:
                 dict: Dictionary mapping variable names to file paths
             """
+            # Ensure year and month are integers
+            year = int(year)
+            month = int(month)
+            
             # Format the directory path for the year and month
             year_month_dir = f"{base_path}/{year:04d}{month:02d}"
             
@@ -132,22 +136,27 @@ def taxi_weather_analysis(self):
                 logging.warning(f"Directory {year_month_dir} not found, looking for alternatives")
                 
                 # List all directories in the base path
-                available_dirs = [d for d in os.listdir(base_path) 
-                                if os.path.isdir(os.path.join(base_path, d)) and d.isdigit() and len(d) == 6]
-                
-                if not available_dirs:
-                    raise FileNotFoundError(f"No valid year-month directories found in {base_path}")
-                
-                # Convert to integers for numeric comparison
-                available_ym = [int(d) for d in available_dirs]
-                
-                # Find the closest year-month
-                target_ym = year * 100 + month
-                closest_ym = min(available_ym, key=lambda ym: abs(ym - target_ym))
-                
-                # Update directory path
-                year_month_dir = f"{base_path}/{closest_ym}"
-                logging.info(f"Using alternative directory: {year_month_dir}")
+                try:
+                    available_dirs = [d for d in os.listdir(base_path) 
+                                    if os.path.isdir(os.path.join(base_path, d)) and d.isdigit() and len(d) == 6]
+                    
+                    if not available_dirs:
+                        raise FileNotFoundError(f"No valid year-month directories found in {base_path}")
+                    
+                    # Convert to integers for numeric comparison
+                    available_ym = [int(d) for d in available_dirs]
+                    
+                    # Find the closest year-month
+                    target_ym = year * 100 + month
+                    closest_ym = min(available_ym, key=lambda ym: abs(ym - target_ym))
+                    
+                    # Update directory path
+                    year_month_dir = f"{base_path}/{closest_ym}"
+                    logging.info(f"Using alternative directory: {year_month_dir}")
+                    
+                except Exception as e:
+                    logging.error(f"Error finding alternative directory: {e}")
+                    raise FileNotFoundError(f"Could not find suitable ERA5 data directory for {year}-{month}")
             
             # Define key variables we're interested in with their file patterns
             target_variables = {
@@ -165,19 +174,24 @@ def taxi_weather_analysis(self):
             # Find the corresponding files
             found_files = {}
             
-            files = os.listdir(year_month_dir)
-            nc_files = [f for f in files if f.endswith('.nc')]
-            
-            for var, pattern in target_variables.items():
-                matching_files = [f for f in nc_files if pattern in f]
+            try:
+                files = os.listdir(year_month_dir)
+                nc_files = [f for f in files if f.endswith('.nc')]
                 
-                if matching_files:
-                    # Sort by file size (larger files might have more complete data)
-                    matching_files.sort(key=lambda f: os.path.getsize(os.path.join(year_month_dir, f)), reverse=True)
-                    found_files[var] = os.path.join(year_month_dir, matching_files[0])
-                    logging.info(f"Found file for {var}: {matching_files[0]}")
-                else:
-                    logging.warning(f"No file found for variable {var} with pattern {pattern}")
+                for var, pattern in target_variables.items():
+                    matching_files = [f for f in nc_files if pattern in f]
+                    
+                    if matching_files:
+                        # Sort by file size (larger files might have more complete data)
+                        matching_files.sort(key=lambda f: os.path.getsize(os.path.join(year_month_dir, f)), reverse=True)
+                        found_files[var] = os.path.join(year_month_dir, matching_files[0])
+                        logging.info(f"Found file for {var}: {matching_files[0]}")
+                    else:
+                        logging.warning(f"No file found for variable {var} with pattern {pattern}")
+            
+            except Exception as e:
+                logging.error(f"Error scanning directory {year_month_dir}: {e}")
+                raise FileNotFoundError(f"Failed to process ERA5 files in {year_month_dir}: {e}")
             
             if not found_files:
                 raise FileNotFoundError(f"No suitable ERA5 files found in {year_month_dir}")
@@ -318,11 +332,11 @@ def taxi_weather_analysis(self):
         date_range = [start_date + timedelta(hours=i % (24*365)) for i in range(num_rows)]
         df['pickup_datetime'] = date_range
         
-        # Extract date components
-        df['year'] = df['pickup_datetime'].dt.year
-        df['month'] = df['pickup_datetime'].dt.month
-        df['day'] = df['pickup_datetime'].dt.day
-        df['hour'] = df['pickup_datetime'].dt.hour
+        # Extract date components - ensure they are stored as integers
+        df['year'] = df['pickup_datetime'].dt.year.astype(int)
+        df['month'] = df['pickup_datetime'].dt.month.astype(int)
+        df['day'] = df['pickup_datetime'].dt.day.astype(int)
+        df['hour'] = df['pickup_datetime'].dt.hour.astype(int)
         
         # Step 2: Process ERA5 data
         era5_base_path = "/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc"
@@ -340,6 +354,10 @@ def taxi_weather_analysis(self):
         # Process each year-month
         for year, month in unique_dates:
             try:
+                # Ensure year and month are integers
+                year = int(year)
+                month = int(month)
+                
                 # Find appropriate ERA5 files for this month
                 era5_files = find_era5_files(year, month, era5_base_path)
                 logging.info(f"Found {len(era5_files)} ERA5 files for {year}-{month}")
@@ -365,8 +383,11 @@ def taxi_weather_analysis(self):
                 # Process each day and hour
                 for _, row in daily_stats.iterrows():
                     try:
-                        day = row['day']
-                        hour = row['hour']
+                        # Convert day and hour to integers to avoid formatting issues
+                        day = int(row['day'])
+                        hour = int(row['hour'])
+                        
+                        logging.info(f"Processing data for {year}-{month:02d}-{day:02d} {hour:02d}:00")
                         
                         # Format datetime for ERA5 selection
                         date_str = f"{year}-{month:02d}-{day:02d}T{hour:02d}:00:00"
@@ -375,12 +396,51 @@ def taxi_weather_analysis(self):
                         weather_data = extract_era5_weather_data(datasets, date_str, nyc_lat_slice, nyc_lon_slice)
                         
                         # Extract taxi metrics - handle MultiIndex columns from groupby.agg()
-                        taxi_metrics = {
-                            'ride_count': row[('fare_amount', 'count')],
-                            'avg_fare': row[('fare_amount', 'mean')],
-                            'avg_distance': row[('trip_distance', 'mean')],
-                            'avg_trip_time': row[('trip_time_in_secs', 'mean')]
-                        }
+                        try:
+                            # Handle the case where pandas might return different column types
+                            if isinstance(row.index, pd.MultiIndex):
+                                # For MultiIndex columns
+                                taxi_metrics = {
+                                    'ride_count': float(row[('fare_amount', 'count')]),
+                                    'avg_fare': float(row[('fare_amount', 'mean')]),
+                                    'avg_distance': float(row[('trip_distance', 'mean')]),
+                                    'avg_trip_time': float(row[('trip_time_in_secs', 'mean')])
+                                }
+                            else:
+                                # Direct column access for non-MultiIndex
+                                taxi_metrics = {
+                                    'ride_count': float(row['fare_amount_count']),
+                                    'avg_fare': float(row['fare_amount_mean']),
+                                    'avg_distance': float(row['trip_distance_mean']),
+                                    'avg_trip_time': float(row['trip_time_in_secs_mean'])
+                                }
+                        except KeyError as ke:
+                            # Fallback with explicit column name access
+                            logging.warning(f"Key error on taxi metrics: {ke}. Attempting fallback.")
+                            column_names = row.index if isinstance(row, pd.Series) else row.keys()
+                            logging.info(f"Available columns: {column_names}")
+                            
+                            # Try a more robust approach
+                            taxi_metrics = {}
+                            try:
+                                for col_name in column_names:
+                                    if 'count' in str(col_name).lower():
+                                        taxi_metrics['ride_count'] = float(row[col_name])
+                                    elif 'fare' in str(col_name).lower() and 'mean' in str(col_name).lower():
+                                        taxi_metrics['avg_fare'] = float(row[col_name])
+                                    elif 'distance' in str(col_name).lower():
+                                        taxi_metrics['avg_distance'] = float(row[col_name])
+                                    elif 'time' in str(col_name).lower():
+                                        taxi_metrics['avg_trip_time'] = float(row[col_name])
+                            except Exception as e:
+                                logging.error(f"Failed to extract taxi metrics: {e}")
+                                # Set default values
+                                taxi_metrics = {
+                                    'ride_count': 0,
+                                    'avg_fare': 0,
+                                    'avg_distance': 0,
+                                    'avg_trip_time': 0
+                                }
                         
                         # Create readable date string
                         date_time_str = f"{year}-{month:02d}-{day:02d} {hour:02d}:00"
@@ -399,7 +459,7 @@ def taxi_weather_analysis(self):
                         weather_impacts.append(result)
                         
                     except Exception as e:
-                        logging.warning(f"Error processing data for {year}-{month}-{day} {hour}:00: {e}")
+                        logging.warning(f"Error processing data for {year}-{month}-{day} {hour}:00: {str(e)}")
                         continue
                 
                 # Close datasets to free memory
@@ -407,7 +467,7 @@ def taxi_weather_analysis(self):
                     ds.close()
                 
             except Exception as e:
-                logging.warning(f"Error processing ERA5 files for {year}-{month}: {e}")
+                logging.warning(f"Error processing ERA5 files for {year}-{month}: {str(e)}")
                 continue
         
         # Calculate correlations
@@ -423,13 +483,13 @@ def taxi_weather_analysis(self):
                         'month': r['month'],
                         'day': r['day'],
                         'hour': r['hour'],
-                        'ride_count': r['taxi']['ride_count'],
-                        'avg_fare': r['taxi']['avg_fare'],
-                        'avg_distance': r['taxi']['avg_distance'],
-                        'avg_trip_time': r['taxi']['avg_trip_time']
+                        'ride_count': r['taxi'].get('ride_count', 0),
+                        'avg_fare': r['taxi'].get('avg_fare', 0),
+                        'avg_distance': r['taxi'].get('avg_distance', 0),
+                        'avg_trip_time': r['taxi'].get('avg_trip_time', 0)
                     }
                     # Add weather variables
-                    for k, v in r['weather'].items():
+                    for k, v in r.get('weather', {}).items():
                         record[f"weather_{k}"] = v
                     
                     impact_records.append(record)
@@ -451,7 +511,7 @@ def taxi_weather_analysis(self):
                                 if not np.isnan(corr):
                                     correlations[f"{taxi_col}_vs_{weather_col}"] = float(corr)
                         except Exception as e:
-                            logging.warning(f"Error calculating correlation for {taxi_col} vs {weather_col}: {e}")
+                            logging.warning(f"Error calculating correlation for {taxi_col} vs {weather_col}: {str(e)}")
                             continue
                 
                 # Get top correlations
@@ -482,7 +542,7 @@ def taxi_weather_analysis(self):
                 
                 # Calculate taxi metrics statistics
                 taxi_stats = {}
-                for metric in taxi_columns:
+                for metric in ['ride_count', 'avg_fare', 'avg_distance', 'avg_trip_time']:
                     values = [impact['taxi'].get(metric) for impact in weather_impacts 
                              if metric in impact.get('taxi', {}) and impact['taxi'].get(metric) is not None]
                     if values:
@@ -500,7 +560,10 @@ def taxi_weather_analysis(self):
                         weather_condition_counts[condition] = weather_condition_counts.get(condition, 0) + 1
                 
             except Exception as e:
-                logging.error(f"Error in correlation analysis: {e}")
+                logging.error(f"Error in correlation analysis: {str(e)}")
+                logging.error(f"Exception details: {str(e)}")
+                import traceback
+                logging.error(traceback.format_exc())
         
         # Apply the conversion function to ensure all NumPy types are converted
         weather_impacts = convert_numpy_types(weather_impacts)
@@ -527,5 +590,7 @@ def taxi_weather_analysis(self):
         return result
     
     except Exception as exc:
-        logging.error(f"Error in taxi-weather analysis: {exc}")
+        logging.error(f"Error in taxi-weather analysis: {str(exc)}")
+        import traceback
+        logging.error(traceback.format_exc())
         raise self.retry(exc=exc, countdown=60*5)  # Retry after 5 minutes
