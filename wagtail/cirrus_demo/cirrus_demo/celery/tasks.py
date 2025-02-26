@@ -80,7 +80,7 @@ def total_taxi_fare(self):
         raise
 
 @shared_task(bind=True, max_retries=3)
-def taxi_weather_analysis_debug(self):
+def taxi_weather_analysis(self):
     """Enhanced version of taxi_weather_analysis with comprehensive debugging"""
     # Setup enhanced logging
     import logging
@@ -692,7 +692,7 @@ def taxi_weather_analysis_debug(self):
                 weather_columns = [col for col in impact_df.columns if col.startswith('weather_')]
                 
                 logger.debug(f"Found {len(taxi_columns)} taxi metrics and {len(weather_columns)} weather variables")
-                
+
                 for taxi_col in taxi_columns:
                     for weather_col in weather_columns:
                         try:
