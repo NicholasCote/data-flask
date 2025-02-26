@@ -493,7 +493,7 @@ def taxi_weather_analysis(self):
         correlations = convert_numpy_types(correlations)
         
         # Return more informative results
-        return {
+        result = {
             'weather_impact_samples': weather_impacts[:15],  # First 15 samples
             'correlations': correlations,
             'top_correlations': dict(top_correlations) if 'top_correlations' in locals() else {},
@@ -509,6 +509,10 @@ def taxi_weather_analysis(self):
             }
         }
         
+        result = convert_numpy_types(result)
+
+        return result
+    
     except Exception as exc:
         logging.error(f"Error in taxi-weather analysis: {exc}")
         raise self.retry(exc=exc, countdown=60*5)  # Retry after 5 minutes
