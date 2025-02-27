@@ -226,6 +226,19 @@ def taxi_weather_analysis(self):
                 logging.warning("No datasets provided to extract_era5_weather_data")
                 return weather_data
             
+            # Variable mapping between internal names and the actual variables in the ERA5 files
+            var_mapping = {
+                't2m': ['VAR_2T', '2T', 't2m'],
+                'd2m': ['VAR_2D', '2D', 'd2m'],
+                'sp': ['SP', 'sp'],
+                'msl': ['MSL', 'msl'],
+                'u10': ['VAR_10U', '10U', 'u10'],
+                'v10': ['VAR_10V', '10V', 'v10'],
+                'tcc': ['TCC', 'tcc'],
+                'tcw': ['TCW', 'tcw'],
+                'skt': ['SKT', 'skt']
+            }
+            
             # Process each variable dataset
             for var_name, ds in datasets.items():
                 try:
@@ -256,45 +269,72 @@ def taxi_weather_analysis(self):
                         # Log available data variables
                         logging.info(f"Available data variables: {list(var_data.data_vars.keys())}")
                         
-                        # Get the data variable (usually has the same name as the file)
+                        # Get the data variable using our mapping
                         data_var = None
-                        if var_name in var_data.data_vars:
-                            data_var = var_data[var_name]
-                            logging.info(f"Found variable {var_name} directly")
-                        else:
-                            # Try to find a related variable
-                            # Look for variables containing our target name
-                            matching_vars = [v for v in var_data.data_vars if var_name in v.lower()]
-                            if matching_vars:
-                                data_var = var_data[matching_vars[0]]
-                                logging.info(f"Found related variable {matching_vars[0]}")
-                            else:
-                                # Just take the first available variable
-                                data_vars = list(var_data.data_vars.keys())
-                                if data_vars:
-                                    data_var = var_data[data_vars[0]]
-                                    logging.info(f"Using first available variable {data_vars[0]}")
-                                else:
-                                    logging.warning(f"No data variables found for {var_name}")
-                                    continue
+                        possible_var_names = var_mapping.get(var_name, [var_name])
+                        
+                        # Try all possible variable names
+                        for possible_name in possible_var_names:
+                            if possible_name in var_data.data_vars:
+                                data_var = var_data[possible_name]
+                                logging.info(f"Found variable {possible_name} for {var_name}")
+                                break
+                        
+                        # If no match found, try case-insensitive match
+                        if data_var is None:
+                            for var in var_data.data_vars:
+                                if any(possible_name.lower() == var.lower() for possible_name in possible_var_names):
+                                    data_var = var_data[var]
+                                    logging.info(f"Found case-insensitive match: {var} for {var_name}")
+                                    break
+                        
+                        # If still no match, use the first variable
+                        if data_var is None and len(var_data.data_vars) > 0:
+                            var = list(var_data.data_vars.keys())[0]
+                            if var != 'utc_date':  # Skip utc_date variable
+                                data_var = var_data[var]
+                                logging.info(f"Using first available variable {var} for {var_name}")
                         
                         # Calculate mean value for the region
-                        if data_var is not None and hasattr(data_var, 'mean'):
-                            logging.info(f"Calculating mean for {var_name}")
-                            mean_val = float(data_var.mean().values)
+                        if data_var is not None:
+                            # Log shape and values of data_var to debug
+                            logging.info(f"Data variable shape: {data_var.shape}")
+                            logging.info(f"Data variable values sample: {data_var.values.flatten()[:5]}")
                             
-                            # Skip NaN values
-                            if not np.isnan(mean_val):
+                            try:
+                                # Handle case where mean() doesn't work directly
+                                if hasattr(data_var, 'mean'):
+                                    mean_val = float(data_var.mean().values)
+                                    logging.info(f"Successfully calculated mean using xarray mean(): {mean_val}")
+                                else:
+                                    # Manual calculation if mean() method isn't available
+                                    values = data_var.values
+                                    if values.size > 0:
+                                        mean_val = float(np.nanmean(values))
+                                        logging.info(f"Calculated mean manually using numpy: {mean_val}")
+                                    else:
+                                        logging.warning(f"Empty values array for {var_name}")
+                                        continue
+                                
+                                # Skip NaN values
+                                if np.isnan(mean_val):
+                                    logging.warning(f"Mean value for {var_name} is NaN, skipping")
+                                    continue
+                                
                                 # Process values based on variable type
                                 if var_name == 't2m' or var_name == 'd2m' or var_name == 'skt':
                                     # Convert from Kelvin to Celsius
                                     mean_val = mean_val - 273.15
+                                    logging.info(f"Converted temperature from K to C: {mean_val}")
                                 elif var_name == 'sp' or var_name == 'msl':
                                     # Convert from Pa to hPa
                                     mean_val = mean_val / 100.0
+                                    logging.info(f"Converted pressure from Pa to hPa: {mean_val}")
                                 elif var_name == 'tcc':
                                     # Convert from 0-1 to percentage
-                                    mean_val = mean_val * 100.0
+                                    if mean_val <= 1.0:  # Only scale if in 0-1 range
+                                        mean_val = mean_val * 100.0
+                                        logging.info(f"Converted cloud cover from 0-1 to percent: {mean_val}")
                                 
                                 # Use readable names
                                 variable_mapping = {
@@ -313,13 +353,17 @@ def taxi_weather_analysis(self):
                                 readable_name = variable_mapping.get(var_name, var_name)
                                 weather_data[readable_name] = round(mean_val, 2)
                                 logging.info(f"Added {readable_name}: {round(mean_val, 2)}")
+                            except Exception as e:
+                                logging.error(f"Error calculating mean for {var_name}: {str(e)}")
+                                import traceback
+                                logging.error(traceback.format_exc())
                     else:
                         logging.warning(f"Could not identify lat/lon coordinates for {var_name}")
                 
                 except Exception as e:
-                    logging.warning(f"Error processing variable {var_name}: {str(e)}")
+                    logging.error(f"Error processing variable {var_name}: {str(e)}")
                     import traceback
-                    logging.warning(traceback.format_exc())
+                    logging.error(traceback.format_exc())
             
             # Calculate derived metrics if possible
             try:
@@ -332,7 +376,7 @@ def taxi_weather_analysis(self):
                     weather_data['wind_direction_degrees'] = round(np.degrees(np.arctan2(-u, -v)), 2) % 360
                     logging.info("Added derived wind metrics")
             except Exception as e:
-                logging.warning(f"Error calculating wind metrics: {str(e)}")
+                logging.error(f"Error calculating wind metrics: {str(e)}")
             
             # Add categorical description of weather if possible
             try:
@@ -353,9 +397,9 @@ def taxi_weather_analysis(self):
                     weather_data['weather_condition'] = condition
                     logging.info(f"Added weather condition: {condition}")
             except Exception as e:
-                logging.warning(f"Error determining weather condition: {str(e)}")
+                logging.error(f"Error determining weather condition: {str(e)}")
             
-            logging.info(f"Final weather data contains {len(weather_data)} metrics")
+            logging.info(f"Final weather data contains {len(weather_data)} metrics: {list(weather_data.keys())}")
             return weather_data
         
         # Step 1: Download and process taxi data
