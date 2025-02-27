@@ -91,7 +91,7 @@ def taxi_weather_analysis(self):
         from io import StringIO
         from datetime import datetime, timedelta
         
-        # Set up more verbose logging
+        # Set up verbose logging
         logging.basicConfig(level=logging.INFO)
         
         # Helper function to convert NumPy types to Python native types
@@ -194,10 +194,6 @@ def taxi_weather_analysis(self):
                 nc_files = [f for f in files if f.endswith('.nc')]
                 logging.info(f"Found {len(nc_files)} NetCDF files")
                 
-                # Print first few file names for debugging
-                if nc_files:
-                    logging.info(f"Sample NC files: {nc_files[:5]}")
-                
                 # Find files for each variable
                 for var, pattern in target_variables.items():
                     matching_files = [f for f in nc_files if pattern in f]
@@ -217,9 +213,21 @@ def taxi_weather_analysis(self):
             logging.info(f"Found {len(found_files)} variable files out of {len(target_variables)} variables")
             return found_files
         
-        # Function to extract and format weather data from ERA5 dataset
-        def extract_era5_weather_data(datasets, date_str, lat_slice, lon_slice):
-            """Extract and format weather data from ERA5 datasets for a specific date and region."""
+        # Update the extract_era5_weather_data function with these changes:
+
+        def extract_era5_weather_data(datasets, date_str, nyc_lat, nyc_lon):
+            """
+            Extract and format weather data from ERA5 datasets for a specific date and NYC location.
+            
+            Args:
+                datasets (dict): Dictionary of variable names to xarray datasets
+                date_str (str): Date string in format YYYY-MM-DDThh:mm:ss
+                nyc_lat (float): NYC latitude (around 40.7)
+                nyc_lon (float): NYC longitude (adjusted to 0-360 format, around 255.7)
+                
+            Returns:
+                dict: Weather data for the specified date and location
+            """
             weather_data = {}
             
             if not datasets:
@@ -228,12 +236,12 @@ def taxi_weather_analysis(self):
             
             # Variable mapping between internal names and the actual variables in the ERA5 files
             var_mapping = {
-                't2m': ['VAR_2T', '2T', 't2m'],
-                'd2m': ['VAR_2D', '2D', 'd2m'],
+                't2m': ['VAR_2T', '2T', 't2m', 'T2M'],
+                'd2m': ['VAR_2D', '2D', 'd2m', 'D2M'],
                 'sp': ['SP', 'sp'],
                 'msl': ['MSL', 'msl'],
-                'u10': ['VAR_10U', '10U', 'u10'],
-                'v10': ['VAR_10V', '10V', 'v10'],
+                'u10': ['VAR_10U', '10U', 'u10', 'U10', 'u10n', 'U10N'],
+                'v10': ['VAR_10V', '10V', 'v10', 'V10', 'v10n', 'V10N'],
                 'tcc': ['TCC', 'tcc'],
                 'tcw': ['TCW', 'tcw'],
                 'skt': ['SKT', 'skt']
@@ -248,117 +256,124 @@ def taxi_weather_analysis(self):
                     lat_names = [coord for coord in ds.coords if coord.lower() in ('latitude', 'lat')]
                     lon_names = [coord for coord in ds.coords if coord.lower() in ('longitude', 'lon')]
                     
-                    logging.info(f"Coordinate names - lat: {lat_names}, lon: {lon_names}")
-                    
-                    if lat_names and lon_names:
-                        lat_name, lon_name = lat_names[0], lon_names[0]
+                    if not lat_names or not lon_names:
+                        logging.warning(f"Could not identify lat/lon coordinates for {var_name}")
+                        continue
                         
-                        # Create selection dict for the region
-                        selection = {
-                            lat_name: lat_slice,
-                            lon_name: lon_slice
+                    lat_name, lon_name = lat_names[0], lon_names[0]
+                    
+                    # Log coordinate ranges
+                    lat_min = float(ds[lat_name].min())
+                    lat_max = float(ds[lat_name].max())
+                    lon_min = float(ds[lon_name].min())
+                    lon_max = float(ds[lon_name].max())
+                    logging.info(f"Coordinate ranges - lat: [{lat_min}, {lat_max}], lon: [{lon_min}, {lon_max}]")
+                    
+                    # Verify our point is in range
+                    if not (lat_min <= nyc_lat <= lat_max):
+                        logging.warning(f"NYC latitude {nyc_lat} is outside dataset range [{lat_min}, {lat_max}]")
+                        continue
+                        
+                    if not (lon_min <= nyc_lon <= lon_max):
+                        logging.warning(f"NYC longitude {nyc_lon} is outside dataset range [{lon_min}, {lon_max}]")
+                        continue
+                    
+                    # Get the data variable using our mapping
+                    data_var = None
+                    possible_var_names = var_mapping.get(var_name, [var_name])
+                    
+                    # Get a list of all data variables in the dataset
+                    all_vars = list(ds.data_vars.keys())
+                    logging.info(f"Available variables: {all_vars}")
+                    
+                    # Try all possible variable names
+                    for possible_name in possible_var_names:
+                        if possible_name in ds.data_vars:
+                            data_var_name = possible_name
+                            logging.info(f"Found variable {possible_name} for {var_name}")
+                            break
+                    
+                    # If no match found, try case-insensitive match
+                    if not data_var:
+                        for actual_var in all_vars:
+                            if any(possible_name.lower() == actual_var.lower() for possible_name in possible_var_names):
+                                data_var_name = actual_var
+                                logging.info(f"Found case-insensitive match: {actual_var} for {var_name}")
+                                break
+                    
+                    # If still no match, use the first variable that's not utc_date
+                    if not data_var and all_vars:
+                        var_candidates = [v for v in all_vars if v.lower() != 'utc_date']
+                        if var_candidates:
+                            data_var_name = var_candidates[0]
+                            logging.info(f"Using first available variable {data_var_name} for {var_name}")
+                        else:
+                            logging.warning(f"No suitable data variable found for {var_name}")
+                            continue
+                    
+                    # Select the time point
+                    try:
+                        logging.info(f"Selecting time: {date_str}")
+                        time_selected = ds.sel(time=date_str, method="nearest")
+                        logging.info(f"Time selection successful, shape: {time_selected.dims}")
+                    except Exception as e:
+                        logging.error(f"Time selection failed: {str(e)}")
+                        continue
+                    
+                    # Select the nearest point to NYC
+                    try:
+                        # Use "nearest" method to find the closest grid point
+                        point_data = time_selected[data_var_name].sel(
+                            {lat_name: nyc_lat, lon_name: nyc_lon}, 
+                            method="nearest"
+                        )
+                        
+                        logging.info(f"Point selection successful, result: {point_data.values}")
+                        
+                        # Extract the value (should be a single number)
+                        mean_val = float(point_data.values)
+                        
+                        # Skip NaN values
+                        if np.isnan(mean_val):
+                            logging.warning(f"Value for {var_name} is NaN, skipping")
+                            continue
+                        
+                        # Process values based on variable type
+                        if var_name == 't2m' or var_name == 'd2m' or var_name == 'skt':
+                            # Convert from Kelvin to Celsius
+                            mean_val = mean_val - 273.15
+                            logging.info(f"Converted temperature from K to C: {mean_val}")
+                        elif var_name == 'sp' or var_name == 'msl':
+                            # Convert from Pa to hPa
+                            mean_val = mean_val / 100.0
+                            logging.info(f"Converted pressure from Pa to hPa: {mean_val}")
+                        elif var_name == 'tcc':
+                            # Convert from 0-1 to percentage
+                            if mean_val <= 1.0:  # Only scale if in 0-1 range
+                                mean_val = mean_val * 100.0
+                                logging.info(f"Converted cloud cover from 0-1 to percent: {mean_val}")
+                        
+                        # Use readable names
+                        variable_mapping = {
+                            't2m': 'temperature_2m_C',
+                            'tp': 'total_precipitation_mm',
+                            'sp': 'surface_pressure_hPa',
+                            'msl': 'mean_sea_level_pressure_hPa',
+                            'u10': 'wind_u_component_10m_ms',
+                            'v10': 'wind_v_component_10m_ms',
+                            'tcc': 'total_cloud_cover_percent',
+                            'tcw': 'total_column_water_kg_m2',
+                            'd2m': 'dewpoint_2m_C',
+                            'skt': 'skin_temperature_C'
                         }
                         
-                        # Select region first, then time
-                        logging.info(f"Selecting region using {selection}")
-                        regional_ds = ds.sel(**selection)
-                        
-                        logging.info(f"Selecting time: {date_str}")
-                        var_data = regional_ds.sel(time=date_str, method="nearest")
-                        
-                        # Log available data variables
-                        logging.info(f"Available data variables: {list(var_data.data_vars.keys())}")
-                        
-                        # Get the data variable using our mapping
-                        data_var = None
-                        possible_var_names = var_mapping.get(var_name, [var_name])
-                        
-                        # Try all possible variable names
-                        for possible_name in possible_var_names:
-                            if possible_name in var_data.data_vars:
-                                data_var = var_data[possible_name]
-                                logging.info(f"Found variable {possible_name} for {var_name}")
-                                break
-                        
-                        # If no match found, try case-insensitive match
-                        if data_var is None:
-                            for var in var_data.data_vars:
-                                if any(possible_name.lower() == var.lower() for possible_name in possible_var_names):
-                                    data_var = var_data[var]
-                                    logging.info(f"Found case-insensitive match: {var} for {var_name}")
-                                    break
-                        
-                        # If still no match, use the first variable
-                        if data_var is None and len(var_data.data_vars) > 0:
-                            var = list(var_data.data_vars.keys())[0]
-                            if var != 'utc_date':  # Skip utc_date variable
-                                data_var = var_data[var]
-                                logging.info(f"Using first available variable {var} for {var_name}")
-                        
-                        # Calculate mean value for the region
-                        if data_var is not None:
-                            # Log shape and values of data_var to debug
-                            logging.info(f"Data variable shape: {data_var.shape}")
-                            logging.info(f"Data variable values sample: {data_var.values.flatten()[:5]}")
-                            
-                            try:
-                                # Handle case where mean() doesn't work directly
-                                if hasattr(data_var, 'mean'):
-                                    mean_val = float(data_var.mean().values)
-                                    logging.info(f"Successfully calculated mean using xarray mean(): {mean_val}")
-                                else:
-                                    # Manual calculation if mean() method isn't available
-                                    values = data_var.values
-                                    if values.size > 0:
-                                        mean_val = float(np.nanmean(values))
-                                        logging.info(f"Calculated mean manually using numpy: {mean_val}")
-                                    else:
-                                        logging.warning(f"Empty values array for {var_name}")
-                                        continue
-                                
-                                # Skip NaN values
-                                if np.isnan(mean_val):
-                                    logging.warning(f"Mean value for {var_name} is NaN, skipping")
-                                    continue
-                                
-                                # Process values based on variable type
-                                if var_name == 't2m' or var_name == 'd2m' or var_name == 'skt':
-                                    # Convert from Kelvin to Celsius
-                                    mean_val = mean_val - 273.15
-                                    logging.info(f"Converted temperature from K to C: {mean_val}")
-                                elif var_name == 'sp' or var_name == 'msl':
-                                    # Convert from Pa to hPa
-                                    mean_val = mean_val / 100.0
-                                    logging.info(f"Converted pressure from Pa to hPa: {mean_val}")
-                                elif var_name == 'tcc':
-                                    # Convert from 0-1 to percentage
-                                    if mean_val <= 1.0:  # Only scale if in 0-1 range
-                                        mean_val = mean_val * 100.0
-                                        logging.info(f"Converted cloud cover from 0-1 to percent: {mean_val}")
-                                
-                                # Use readable names
-                                variable_mapping = {
-                                    't2m': 'temperature_2m_C',
-                                    'tp': 'total_precipitation_mm',
-                                    'sp': 'surface_pressure_hPa',
-                                    'msl': 'mean_sea_level_pressure_hPa',
-                                    'u10': 'wind_u_component_10m_ms',
-                                    'v10': 'wind_v_component_10m_ms',
-                                    'tcc': 'total_cloud_cover_percent',
-                                    'tcw': 'total_column_water_kg_m2',
-                                    'd2m': 'dewpoint_2m_C',
-                                    'skt': 'skin_temperature_C'
-                                }
-                                
-                                readable_name = variable_mapping.get(var_name, var_name)
-                                weather_data[readable_name] = round(mean_val, 2)
-                                logging.info(f"Added {readable_name}: {round(mean_val, 2)}")
-                            except Exception as e:
-                                logging.error(f"Error calculating mean for {var_name}: {str(e)}")
-                                import traceback
-                                logging.error(traceback.format_exc())
-                    else:
-                        logging.warning(f"Could not identify lat/lon coordinates for {var_name}")
+                        readable_name = variable_mapping.get(var_name, var_name)
+                        weather_data[readable_name] = round(mean_val, 2)
+                        logging.info(f"Added {readable_name}: {round(mean_val, 2)}")
+                    except Exception as e:
+                        logging.error(f"Error extracting point data for {var_name}: {str(e)}")
+                        import traceback
+                        logging.error(traceback.format_exc())
                 
                 except Exception as e:
                     logging.error(f"Error processing variable {var_name}: {str(e)}")
@@ -402,7 +417,7 @@ def taxi_weather_analysis(self):
             logging.info(f"Final weather data contains {len(weather_data)} metrics: {list(weather_data.keys())}")
             return weather_data
         
-        # Step 1: Download and process taxi data
+         # Step 1: Download and process taxi data
         logging.info("Downloading taxi data...")
         url = "https://github.com/dotnet/machinelearning/raw/refs/heads/main/test/data/taxi-fare-train.csv"
         
@@ -436,9 +451,12 @@ def taxi_weather_analysis(self):
         # Initialize results
         weather_impacts = []
         
-        # NYC bounding box for weather data
-        nyc_lat_slice = slice(40.5, 41.0)
-        nyc_lon_slice = slice(-74.3, -73.7)
+        # NYC coordinates
+        # Convert from standard longitude (-74.0) to 0-360 format
+        nyc_lat = 40.7  # NYC latitude
+        nyc_lon = 360 - 74.0  # NYC longitude converted to 0-360 range (should be around 286)
+        
+        logging.info(f"NYC coordinates: lat={nyc_lat}, lon={nyc_lon} (0-360 format)")
         
         # Process each year-month - limit to first few for testing
         for year, month in unique_dates[:1]:  # Just process the first month for testing
@@ -498,8 +516,8 @@ def taxi_weather_analysis(self):
                         # Format datetime for ERA5 selection
                         date_str = f"{year_val}-{month_val:02d}-{day:02d}T{hour:02d}:00:00"
                         
-                        # Get weather data for this hour
-                        weather_data = extract_era5_weather_data(datasets, date_str, nyc_lat_slice, nyc_lon_slice)
+                        # Get weather data for this hour at NYC location
+                        weather_data = extract_era5_weather_data(datasets, date_str, nyc_lat, nyc_lon)
                         
                         # Extract taxi metrics
                         try:
