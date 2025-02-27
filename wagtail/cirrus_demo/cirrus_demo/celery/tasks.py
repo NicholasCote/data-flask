@@ -459,7 +459,7 @@ def taxi_weather_analysis(self):
         logging.info(f"NYC coordinates: lat={nyc_lat}, lon={nyc_lon} (0-360 format)")
         
         # Process each year-month - limit to first few for testing
-        for year, month in unique_dates[:1]:  # Just process the first month for testing
+        for year, month in unique_dates:  # Just process the first month for testing
             try:
                 # Ensure year and month are integers
                 year_val = int(year)
@@ -651,7 +651,7 @@ def taxi_weather_analysis(self):
                     # Sort correlations by absolute value
                     sorted_correlations = sorted(correlations.items(), key=lambda x: abs(x[1]), reverse=True)
                     # Take top 10
-                    top_correlations = sorted_correlations[:10]
+                    top_correlations = sorted_correlations
                 
                 # Calculate weather statistics
                 weather_stats = {}
@@ -701,7 +701,7 @@ def taxi_weather_analysis(self):
         
         # Return more informative results
         result = {
-            'weather_impact_samples': weather_impacts[:15],  # First 15 samples
+            'weather_impact_samples': weather_impacts,  # First 15 samples
             'correlations': correlations,
             'top_correlations': dict(top_correlations) if 'top_correlations' in locals() else {},
             'total_days_analyzed': len(set([(impact['year'], impact['month'], impact['day']) 
