@@ -58,28 +58,41 @@ def analysis_view(request):
     return render(request, 'analysis.html')
 
 def glade_image(request):
-    # Check if we need to start a new task or get results from existing one
-    task_id = request.session.get('glade_image_task_id')
+    """
+    View for the GLADE image visualization page.
+    """
+    return render(request, 'glade_image.html')
+
+def trigger_glade_analysis(request):
+    """
+    View for starting the GLADE picture task.
+    """
+    task = get_glade_picture_task.delay()
+    return JsonResponse({'task_id': task.id})
+
+def check_glade_task(request, task_id):
+    """
+    View for checking the status of the GLADE picture task.
+    """
+    task_result = get_glade_picture_task.AsyncResult(task_id)
     
-    if task_id:
-        # Check if the task is already running
-        task_result = get_glade_picture_task.AsyncResult(task_id)
-        
-        if task_result.ready():
-            # Task is complete
-            image_path = task_result.result
-            # Clear the task ID from session
-            del request.session['glade_image_task_id']
-            return render(request, 'image.html', {'image': image_path, 'status': 'complete'})
-        else:
-            # Task is still running
-            return render(request, 'image.html', {'status': 'processing'})
+    response_data = {'task_id': task_id}
+    
+    if task_result.successful():
+        response_data['status'] = 'SUCCESS'
+        response_data['result'] = task_result.result
+    elif task_result.failed():
+        response_data['status'] = 'FAILURE'
+        response_data['error'] = str(task_result.result)
+    elif task_result.state == 'PROGRESS':
+        response_data['status'] = 'PROGRESS'
+        if task_result.info:
+            response_data['progress'] = task_result.info.get('progress', 0)
+            response_data['status_message'] = task_result.info.get('status', '')
     else:
-        # Start a new task
-        task = get_glade_picture_task.delay()
-        # Store the task ID in the session
-        request.session['glade_image_task_id'] = task.id
-        return render(request, 'image.html', {'status': 'started'})
+        response_data['status'] = task_result.state
+        
+    return JsonResponse(response_data)
 
 def directory_browser(request):
     # Base directory to start browsing from

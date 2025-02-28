@@ -1,4 +1,4 @@
-from ..main.glade_functions import get_dataset, get_point_array, wind_speed, plot_winds, get_local_cluster
+from ..main.glade_functions import get_dataset, get_point_array, plot_winds, get_local_cluster
 from celery import shared_task
 from distributed import Client
 import pandas as pd
@@ -729,21 +729,33 @@ def taxi_weather_analysis(self):
         logging.error(traceback.format_exc())
         raise self.retry(exc=exc, countdown=60*5)  # Retry after 5 minutes
     
-@shared_task
-def get_glade_picture_task():
+@shared_task(bind=True)
+def get_glade_picture_task(self):
+    """
+    Process GLADE data and create a wind speed visualization as a Celery task.
+    The 'bind=True' parameter allows us to access the task instance via 'self'
+    so we can update progress.
+    """
     MAX_WORKERS = 1
+    
+    # Set initial progress
+    self.update_state(state='PROGRESS', meta={'progress': 0, 'status': 'Initializing task'})
+    
     try:
         # Create cluster and client
+        self.update_state(state='PROGRESS', meta={'progress': 5, 'status': 'Starting Dask cluster'})
         cluster = get_local_cluster()
         client = Client(cluster)
         
         # Wait for worker with timeout
         try:
+            self.update_state(state='PROGRESS', meta={'progress': 10, 'status': 'Connecting to workers'})
             client.wait_for_workers(n_workers=1, timeout=30)
         except TimeoutError:
             raise RuntimeError("Failed to start Dask workers within timeout period")
 
         # This subdirectory contains surface analysis data on a 0.25 degree global grid
+        self.update_state(state='PROGRESS', meta={'progress': 15, 'status': 'Preparing to load data'})
         data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
 
         # This bash-style pattern will match data for 2021 and 2022.
@@ -755,13 +767,17 @@ def get_glade_picture_task():
         filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
         filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
 
+        self.update_state(state='PROGRESS', meta={'progress': 20, 'status': 'Loading U-component data'})
         ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=True)
+        
+        self.update_state(state='PROGRESS', meta={'progress': 40, 'status': 'Loading V-component data'})
         ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=True)
 
         var_u = 'U10N'
         var_v = 'V10N'
 
         # Select data for a specific geographic location (Cheyenne, Wyoming).
+        self.update_state(state='PROGRESS', meta={'progress': 60, 'status': 'Extracting location data'})
         cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
         city = cheyenne
 
@@ -770,17 +786,24 @@ def get_glade_picture_task():
         v = get_point_array(ds_v, city['lat'], city['lon'], var_v)
 
         # Actually load the data into memory.
+        self.update_state(state='PROGRESS', meta={'progress': 75, 'status': 'Calculating wind speeds'})
         u_values = u.values
         v_values = v.values
 
+        self.update_state(state='PROGRESS', meta={'progress': 85, 'status': 'Generating visualization'})
         figure = plot_winds(u_values, v_values, ds_u.time)
 
+        self.update_state(state='PROGRESS', meta={'progress': 95, 'status': 'Saving visualization'})
         cur_dir = os.getcwd()
         plotfile = cur_dir + '/app/static/glade_data_access.png'
         figure.savefig(plotfile, dpi=100)
 
         return '/static/glade_data_access.png'
 
+    except Exception as e:
+        logging.error(f"Error in GLADE picture task: {str(e)}")
+        raise
+        
     finally:
         # Clean up resources
         if 'client' in locals():
