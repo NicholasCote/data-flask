@@ -2,6 +2,7 @@ from ..main.glade_functions import get_dataset, get_point_array, plot_winds, get
 from celery import shared_task
 from io import StringIO
 import logging
+from matplotlib import pyplot as plt
 import os
 import pandas as pd
 import requests
