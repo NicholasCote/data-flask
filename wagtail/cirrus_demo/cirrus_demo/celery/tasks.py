@@ -1,12 +1,11 @@
 from ..main.glade_functions import get_dataset, get_point_array, plot_winds, get_local_cluster
 from celery import shared_task
-from distributed import Client
-import pandas as pd
-import numpy as np
-import requests
 from io import StringIO
 import logging
 import os
+import pandas as pd
+import requests
+import xarray as xr
 
 @shared_task(bind=True, max_retries=3)
 def analyze_taxi_data(self):
@@ -733,70 +732,59 @@ def taxi_weather_analysis(self):
 def get_glade_picture_task(self):
     """
     Process GLADE data and create a wind speed visualization as a Celery task.
-    The 'bind=True' parameter allows us to access the task instance via 'self'
-    so we can update progress.
+    This version doesn't use Dask to avoid resource conflicts within Celery workers.
     """
-    MAX_WORKERS = 1
-    
     # Set initial progress
     self.update_state(state='PROGRESS', meta={'progress': 0, 'status': 'Initializing task'})
     
     try:
-        # Create cluster and client
-        self.update_state(state='PROGRESS', meta={'progress': 5, 'status': 'Starting Dask cluster'})
-        cluster = get_local_cluster()
-        client = Client(cluster)
-        
-        # Wait for worker with timeout
-        try:
-            self.update_state(state='PROGRESS', meta={'progress': 10, 'status': 'Connecting to workers'})
-            client.wait_for_workers(n_workers=1, timeout=30)
-        except TimeoutError:
-            raise RuntimeError("Failed to start Dask workers within timeout period")
-
         # This subdirectory contains surface analysis data on a 0.25 degree global grid
-        self.update_state(state='PROGRESS', meta={'progress': 15, 'status': 'Preparing to load data'})
+        self.update_state(state='PROGRESS', meta={'progress': 10, 'status': 'Preparing to load data'})
         data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
 
-        # This bash-style pattern will match data for 2021 and 2022.
-        year_month_pattern = '202{1,2}*/'
+        # Use a smaller time range to reduce processing time
+        # In the future, this could be a parameter passed to the task
+        year_month_pattern = '202101'  # Just January 2021
+        data_spec = data_dir + year_month_pattern + '/'
 
-        data_spec = data_dir + year_month_pattern
-
-        # These filename patterns refer to u- and v-components of winds at 10 meters above the land surface.
+        # These filename patterns refer to u- and v-components of winds at 10 meters
         filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
         filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
 
-        self.update_state(state='PROGRESS', meta={'progress': 20, 'status': 'Loading U-component data'})
-        ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=True)
+        # Load datasets - without parallel processing
+        self.update_state(state='PROGRESS', meta={'progress': 30, 'status': 'Loading U-component data'})
+        ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=False)
         
-        self.update_state(state='PROGRESS', meta={'progress': 40, 'status': 'Loading V-component data'})
-        ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=True)
+        self.update_state(state='PROGRESS', meta={'progress': 50, 'status': 'Loading V-component data'})
+        ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=False)
 
         var_u = 'U10N'
         var_v = 'V10N'
 
-        # Select data for a specific geographic location (Cheyenne, Wyoming).
-        self.update_state(state='PROGRESS', meta={'progress': 60, 'status': 'Extracting location data'})
+        # Select data for a specific geographic location (Cheyenne, Wyoming)
+        # In the future, these coordinates could be parameters passed to the task
+        self.update_state(state='PROGRESS', meta={'progress': 70, 'status': 'Extracting location data'})
         cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
         city = cheyenne
 
-        # Select the nearest grid cell to our lat/lon location.
+        # Select the nearest grid cell to our lat/lon location
         u = get_point_array(ds_u, city['lat'], city['lon'], var_u)
         v = get_point_array(ds_v, city['lat'], city['lon'], var_v)
 
-        # Actually load the data into memory.
-        self.update_state(state='PROGRESS', meta={'progress': 75, 'status': 'Calculating wind speeds'})
+        # Load the data into memory
+        self.update_state(state='PROGRESS', meta={'progress': 80, 'status': 'Calculating wind speeds'})
         u_values = u.values
         v_values = v.values
 
-        self.update_state(state='PROGRESS', meta={'progress': 85, 'status': 'Generating visualization'})
+        self.update_state(state='PROGRESS', meta={'progress': 90, 'status': 'Generating visualization'})
         figure = plot_winds(u_values, v_values, ds_u.time)
 
         self.update_state(state='PROGRESS', meta={'progress': 95, 'status': 'Saving visualization'})
         cur_dir = os.getcwd()
         plotfile = cur_dir + '/app/static/glade_data_access.png'
+        os.makedirs(os.path.dirname(plotfile), exist_ok=True)  # Ensure directory exists
         figure.savefig(plotfile, dpi=100)
+        plt.close(figure)  # Clean up matplotlib resources
 
         return '/static/glade_data_access.png'
 
@@ -805,8 +793,8 @@ def get_glade_picture_task(self):
         raise
         
     finally:
-        # Clean up resources
-        if 'client' in locals():
-            client.close()
-        if 'cluster' in locals():
-            cluster.close()
+        # Clean up any open file handles
+        if 'ds_u' in locals():
+            ds_u.close()
+        if 'ds_v' in locals():
+            ds_v.close()
