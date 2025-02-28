@@ -22,7 +22,7 @@ spec:
           nfs:
             server: {{ .Values.webapp.volume1.server }}
             path: {{ .Values.webapp.volume1.path }}
-            readOnly: {{ .Values.webapp.volume1.ro }}
+            readOnly: {{ .Values.webapp.volume1.readOnly }}
       containers:
       - name: {{ .Values.webapp.name }}-worker
         image: {{ .Values.webapp.container.image }}
