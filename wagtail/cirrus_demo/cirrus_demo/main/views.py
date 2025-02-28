@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import os
 from pathlib import Path
-from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare, taxi_weather_analysis
+from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare, taxi_weather_analysis, get_glade_picture_task
 from .glade_functions import get_glade_picture
 
 def home(request):
@@ -58,8 +58,28 @@ def analysis_view(request):
     return render(request, 'analysis.html')
 
 def glade_image(request):
-    image = get_glade_picture()
-    return render(request, 'image.html', image=image)
+    # Check if we need to start a new task or get results from existing one
+    task_id = request.session.get('glade_image_task_id')
+    
+    if task_id:
+        # Check if the task is already running
+        task_result = get_glade_picture_task.AsyncResult(task_id)
+        
+        if task_result.ready():
+            # Task is complete
+            image_path = task_result.result
+            # Clear the task ID from session
+            del request.session['glade_image_task_id']
+            return render(request, 'image.html', {'image': image_path, 'status': 'complete'})
+        else:
+            # Task is still running
+            return render(request, 'image.html', {'status': 'processing'})
+    else:
+        # Start a new task
+        task = get_glade_picture_task.delay()
+        # Store the task ID in the session
+        request.session['glade_image_task_id'] = task.id
+        return render(request, 'image.html', {'status': 'started'})
 
 def directory_browser(request):
     # Base directory to start browsing from

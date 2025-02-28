@@ -1,110 +1,109 @@
 import xarray as xr
 import numpy as np
 from matplotlib import pyplot as plt
-
+from distributed import Client
 import os
 
-def get_glade_picture():
-    def get_dataset(filepath_pattern, use_grib, parallel):
-        """ Given a file pattern specification and a file format type, return an xarray dataset 
-            containing data from all matching files.   
-            
-            `filepath_pattern` must specify a full directory path.  Wildcards may be included to match
-            many subdirectories or groups of files.  Wildcard syntax follows bash shell conventions for
-            greater flexibility.
-            
-            If `parallel = True`, use an existing Dask cluster to open data files.
-        """
-        # If reading GRIB data, disable saving a GRIB index file to the data directory.
-        if use_grib:
-            filename_extension = '.grb'
-            backend_kwargs = {'indexpath': ''}
-        else:
-            filename_extension = '.nc'    
-            backend_kwargs = None
-            
-        full_pattern = filepath_pattern + filename_extension
+def get_dataset(filepath_pattern, use_grib, parallel):
+    """ Given a file pattern specification and a file format type, return an xarray dataset 
+        containing data from all matching files.   
         
-        # Allow bash-style syntax for file patterns
-        file_listing = os.popen(f"/bin/bash -c 'ls {full_pattern}'").read()
+        `filepath_pattern` must specify a full directory path.  Wildcards may be included to match
+        many subdirectories or groups of files.  Wildcard syntax follows bash shell conventions for
+        greater flexibility.
         
-        # Split the output into lines and ignore empty lines
-        file_list = file_listing.split('\n')
-        file_list = [filename for filename in file_list if len(filename) > 0]
-
-        # Verify there is at least one matching file
-        if len(file_list) == 0:
-            raise ValueError(f'No files match the pattern {full_pattern}')
-            
-        ds = xr.open_mfdataset(file_list, parallel=parallel, backend_kwargs=backend_kwargs) 
-        return ds
-
-    def get_point_array(dataset, latitude, longitude, varname=None):
-        """ Extract and return a DataArray object associated with some lat/lon location.
-        A DataArray object is an array of time series values, along with associated metadata.
+        If `parallel = True`, use an existing Dask cluster to open data files.
+    """
+    # If reading GRIB data, disable saving a GRIB index file to the data directory.
+    if use_grib:
+        filename_extension = '.grb'
+        backend_kwargs = {'indexpath': ''}
+    else:
+        filename_extension = '.nc'    
+        backend_kwargs = None
         
-        'dataset' is an xarray dataset
-        
-        'latitude' is a scalar in the range of the dataset's latitude values.
-            
-        'longitude' is a scalar in the range of the dataset's longitude values.
-
-        If 'varname' is provided, retrieve values from this data variable.  Otherwise, 
-            return values from the first data variable in the dataset.
-        """
-        # Assert latitude value is in the dataset range
-        assert(latitude >= np.min(dataset.coords['latitude'].values))
-        assert(latitude <= np.max(dataset.coords['latitude'].values))
-        
-        # Assert longitude value is in the dataset range
-        assert(longitude >= np.min(dataset.coords['longitude'].values))
-        assert(longitude <= np.max(dataset.coords['longitude'].values))
-        
-        # If a data variable name is not provided, use the first data variable.
-        if not varname:
-            data_vars = list(dataset.data_vars.keys())
-            varname = data_vars[0]
-            
-        point_array = dataset[varname].sel(latitude=latitude, longitude=longitude, method='nearest')
-        return point_array
-
-    def wind_speed(u, v, units=None):
-        """Compute the wind speed from u and v-component numpy arrays.
-        If units is 'mph', convert from "meters per second" to "miles per hour".
-        """
-        speed = np.hypot(u, v)
-        if units == 'mph':
-            speed = 2.369 * speed
-        return speed
-
-    def plot_winds(u_values, v_values, time_values):
-        """ Compute wind speed values and plot them on a line plot.
-        """
-        winds = wind_speed(u_values, v_values, units='mph')
-        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-        ax.plot(time_values, winds, color='r')
-        ax.set_title('Hourly Average Wind Speeds for Cheyenne, Wyoming')
-        ax.set_ylabel('Miles Per Hour')
-        return fig
-
-    MAX_WORKERS = 1
+    full_pattern = filepath_pattern + filename_extension
     
-    def get_local_cluster():
-        """Create cluster with controlled resource usage"""
-        from distributed import LocalCluster
-        
-        cluster = LocalCluster(
-            n_workers=MAX_WORKERS,
-            threads_per_worker=2,
-            memory_limit='4GB',
-            scheduler_port=0,  # Dynamically assign port
-            dashboard_address=':0',  # Dynamically assign dashboard port
-            silence_logs=False,  # Keep logs for debugging
-            processes=True  # Use processes instead of threads
-        )
-        return cluster
+    # Allow bash-style syntax for file patterns
+    file_listing = os.popen(f"/bin/bash -c 'ls {full_pattern}'").read()
+    
+    # Split the output into lines and ignore empty lines
+    file_list = file_listing.split('\n')
+    file_list = [filename for filename in file_list if len(filename) > 0]
 
-    from distributed import Client
+    # Verify there is at least one matching file
+    if len(file_list) == 0:
+        raise ValueError(f'No files match the pattern {full_pattern}')
+        
+    ds = xr.open_mfdataset(file_list, parallel=parallel, backend_kwargs=backend_kwargs) 
+    return ds
+
+def get_point_array(dataset, latitude, longitude, varname=None):
+    """ Extract and return a DataArray object associated with some lat/lon location.
+    A DataArray object is an array of time series values, along with associated metadata.
+    
+    'dataset' is an xarray dataset
+    
+    'latitude' is a scalar in the range of the dataset's latitude values.
+        
+    'longitude' is a scalar in the range of the dataset's longitude values.
+
+    If 'varname' is provided, retrieve values from this data variable.  Otherwise, 
+        return values from the first data variable in the dataset.
+    """
+    # Assert latitude value is in the dataset range
+    assert(latitude >= np.min(dataset.coords['latitude'].values))
+    assert(latitude <= np.max(dataset.coords['latitude'].values))
+    
+    # Assert longitude value is in the dataset range
+    assert(longitude >= np.min(dataset.coords['longitude'].values))
+    assert(longitude <= np.max(dataset.coords['longitude'].values))
+    
+    # If a data variable name is not provided, use the first data variable.
+    if not varname:
+        data_vars = list(dataset.data_vars.keys())
+        varname = data_vars[0]
+        
+    point_array = dataset[varname].sel(latitude=latitude, longitude=longitude, method='nearest')
+    return point_array
+
+def wind_speed(u, v, units=None):
+    """Compute the wind speed from u and v-component numpy arrays.
+    If units is 'mph', convert from "meters per second" to "miles per hour".
+    """
+    speed = np.hypot(u, v)
+    if units == 'mph':
+        speed = 2.369 * speed
+    return speed
+
+def plot_winds(u_values, v_values, time_values):
+    """ Compute wind speed values and plot them on a line plot.
+    """
+    winds = wind_speed(u_values, v_values, units='mph')
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    ax.plot(time_values, winds, color='r')
+    ax.set_title('Hourly Average Wind Speeds for Cheyenne, Wyoming')
+    ax.set_ylabel('Miles Per Hour')
+    return fig
+
+MAX_WORKERS = 1
+
+def get_local_cluster():
+    """Create cluster with controlled resource usage"""
+    from distributed import LocalCluster
+    
+    cluster = LocalCluster(
+        n_workers=MAX_WORKERS,
+        threads_per_worker=2,
+        memory_limit='4GB',
+        scheduler_port=0,  # Dynamically assign port
+        dashboard_address=':0',  # Dynamically assign dashboard port
+        silence_logs=False,  # Keep logs for debugging
+        processes=True  # Use processes instead of threads
+    )
+    return cluster
+
+def get_glade_picture():
     try:
         # Create cluster and client
         cluster = get_local_cluster()

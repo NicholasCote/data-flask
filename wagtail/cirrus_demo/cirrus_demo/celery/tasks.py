@@ -1,9 +1,12 @@
+from main.glade_functions import get_dataset, get_point_array, wind_speed, plot_winds, get_local_cluster
 from celery import shared_task
+from distributed import Client
 import pandas as pd
 import numpy as np
 import requests
 from io import StringIO
 import logging
+import os
 
 @shared_task(bind=True, max_retries=3)
 def analyze_taxi_data(self):
@@ -725,3 +728,62 @@ def taxi_weather_analysis(self):
         import traceback
         logging.error(traceback.format_exc())
         raise self.retry(exc=exc, countdown=60*5)  # Retry after 5 minutes
+    
+@shared_task
+def get_glade_picture_task():
+    MAX_WORKERS = 1
+    try:
+        # Create cluster and client
+        cluster = get_local_cluster()
+        client = Client(cluster)
+        
+        # Wait for worker with timeout
+        try:
+            client.wait_for_workers(n_workers=1, timeout=30)
+        except TimeoutError:
+            raise RuntimeError("Failed to start Dask workers within timeout period")
+
+        # This subdirectory contains surface analysis data on a 0.25 degree global grid
+        data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
+
+        # This bash-style pattern will match data for 2021 and 2022.
+        year_month_pattern = '202{1,2}*/'
+
+        data_spec = data_dir + year_month_pattern
+
+        # These filename patterns refer to u- and v-components of winds at 10 meters above the land surface.
+        filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
+        filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
+
+        ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=True)
+        ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=True)
+
+        var_u = 'U10N'
+        var_v = 'V10N'
+
+        # Select data for a specific geographic location (Cheyenne, Wyoming).
+        cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
+        city = cheyenne
+
+        # Select the nearest grid cell to our lat/lon location.
+        u = get_point_array(ds_u, city['lat'], city['lon'], var_u)
+        v = get_point_array(ds_v, city['lat'], city['lon'], var_v)
+
+        # Actually load the data into memory.
+        u_values = u.values
+        v_values = v.values
+
+        figure = plot_winds(u_values, v_values, ds_u.time)
+
+        cur_dir = os.getcwd()
+        plotfile = cur_dir + '/app/static/glade_data_access.png'
+        figure.savefig(plotfile, dpi=100)
+
+        return '/static/glade_data_access.png'
+
+    finally:
+        # Clean up resources
+        if 'client' in locals():
+            client.close()
+        if 'cluster' in locals():
+            cluster.close()
