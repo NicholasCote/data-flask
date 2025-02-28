@@ -61,7 +61,7 @@ def glade_image(request):
     """
     View for the GLADE image visualization page.
     """
-    return render(request, 'glade_image.html')
+    return render(request, 'image.html')
 
 def trigger_glade_analysis(request):
     """
