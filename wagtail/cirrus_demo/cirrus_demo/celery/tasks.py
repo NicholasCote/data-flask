@@ -1,4 +1,4 @@
-from main.glade_functions import get_dataset, get_point_array, wind_speed, plot_winds, get_local_cluster
+from ..main.glade_functions import get_dataset, get_point_array, wind_speed, plot_winds, get_local_cluster
 from celery import shared_task
 from distributed import Client
 import pandas as pd
