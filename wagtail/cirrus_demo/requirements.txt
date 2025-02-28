@@ -10,3 +10,4 @@ xarray
 distributed
 matplotlib
 netcdf4
+h5py
