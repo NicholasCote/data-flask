@@ -6,8 +6,10 @@ numpy
 django-celery-results
 redis
 flower
-xarray
+xarray==2024.7.0
 distributed
 matplotlib
 netcdf4
 h5py
+dask
+distributed
