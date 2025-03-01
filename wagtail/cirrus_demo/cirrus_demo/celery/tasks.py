@@ -1,5 +1,6 @@
 from ..main.glade_functions import get_dataset, get_point_array, plot_winds, get_local_cluster
 from celery import shared_task
+from django.conf import settings
 from io import StringIO
 import logging
 from matplotlib import pyplot as plt
@@ -781,13 +782,35 @@ def get_glade_picture_task(self):
         figure = plot_winds(u_values, v_values, ds_u.time)
 
         self.update_state(state='PROGRESS', meta={'progress': 95, 'status': 'Saving visualization'})
-        cur_dir = os.getcwd()
-        plotfile = cur_dir + '/app/static/glade_data_access.png'
-        os.makedirs(os.path.dirname(plotfile), exist_ok=True)  # Ensure directory exists
+        if hasattr(settings, 'STATIC_ROOT') and settings.STATIC_ROOT:
+            static_dir = settings.STATIC_ROOT
+        elif hasattr(settings, 'STATICFILES_DIRS') and settings.STATICFILES_DIRS:
+            static_dir = settings.STATICFILES_DIRS[0]
+        else:
+            # Fallback to a directory we know should exist
+            static_dir = os.path.join(settings.BASE_DIR, 'static')
+        
+        # Ensure the directory exists
+        os.makedirs(static_dir, exist_ok=True)
+        
+        # Save the file
+        filename = 'glade_data_access.png'
+        plotfile = os.path.join(static_dir, filename)
+        
+        # Debug logging
+        print(f"Saving figure to: {plotfile}")
+        
         figure.savefig(plotfile, dpi=100)
         plt.close(figure)  # Clean up matplotlib resources
-
-        return '/static/glade_data_access.png'
+        
+        # Verify the file was created
+        if os.path.exists(plotfile):
+            print(f"File created successfully: {plotfile}, size: {os.path.getsize(plotfile)} bytes")
+        else:
+            print(f"Failed to create file at: {plotfile}")
+            
+        # Return the URL path
+        return f'/static/{filename}'
 
     except Exception as e:
         logging.error(f"Error in GLADE picture task: {str(e)}")
