@@ -214,8 +214,8 @@ def get_location_from_zip(zip_code):
                 # Parse the display_name to extract city, county, and state
                 address_parts = result.get('display_name', '').split(', ')
                 
-                # City is often the first part, but sometimes it's not
-                city = result.get('name', address_parts[0] if address_parts else 'Unknown')
+                # City is often the second part, but sometimes it's not
+                city = address_parts[1]
                 
                 # Get state (usually the second-to-last part for US addresses)
                 state = address_parts[-2] if len(address_parts) >= 2 else 'Unknown'
@@ -237,7 +237,8 @@ def get_location_from_zip(zip_code):
                     'city': city,
                     'county': county,
                     'state': state,
-                    'display_name': display_name
+                    'display_name': display_name,
+                    'results': response.json()
                 }
         
         logging.error(f"Failed to get location for zip code {zip_code}: {response.status_code}")
