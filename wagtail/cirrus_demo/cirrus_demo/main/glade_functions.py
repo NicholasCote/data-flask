@@ -211,6 +211,21 @@ def get_location_from_zip(zip_code):
                 # Take the first result
                 result = data[0]
                 
+                # Parse the display_name to extract city, county, and state
+                address_parts = result.get('display_name', '').split(', ')
+                
+                # City is often the first part, but sometimes it's not
+                city = result.get('name', address_parts[0] if address_parts else 'Unknown')
+                
+                # Get state (usually the second-to-last part for US addresses)
+                state = address_parts[-2] if len(address_parts) >= 2 else 'Unknown'
+                
+                # Get county if available (usually has "County" in the name)
+                county = next((part for part in address_parts if 'County' in part), '')
+                
+                # Create a clean display name for the user interface
+                display_name = f"{city}, {state}"
+                
                 # Convert longitude to 0-360 range as needed by the ERA5 data
                 lon = float(result['lon'])
                 if lon < 0:
@@ -219,8 +234,10 @@ def get_location_from_zip(zip_code):
                 return {
                     'lat': float(result['lat']),
                     'lon': lon,
-                    'city': result.get('name', 'Unknown'),
-                    'state': result.get('display_name', '').split(', ')[-2]
+                    'city': city,
+                    'county': county,
+                    'state': state,
+                    'display_name': display_name
                 }
         
         logging.error(f"Failed to get location for zip code {zip_code}: {response.status_code}")
