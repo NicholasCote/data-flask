@@ -237,8 +237,7 @@ def get_location_from_zip(zip_code):
                     'city': city,
                     'county': county,
                     'state': state,
-                    'display_name': display_name,
-                    'results': response.json()
+                    'display_name': display_name
                 }
         
         logging.error(f"Failed to get location for zip code {zip_code}: {response.status_code}")
