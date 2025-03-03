@@ -61,7 +61,7 @@
                             Wind Speed Visualization for Cheyenne, Wyoming
                         </div>
                         <div class="card-body text-center">
-                            <img id="gladeResultImage" src="/media/glade_data_access.png" alt="Wind Speed Visualization" class="img-fluid">
+                            <img id="gladeResultImage" src="" alt="Wind Speed Visualization" class="img-fluid">
                         </div>
                         <div class="card-footer">
                             <p><small>Data source: ERA5 reanalysis data from the Research Data Archive</small></p>
@@ -324,10 +324,10 @@
             // Hide warning
             document.getElementById('gladeWarning').style.display = 'none';
             
-            // Show result - make sure we're setting the correct path
-            console.log('Setting image path to:', result); // Debug log
+            // Show result - now using the base64 data directly
+            console.log('Setting image data (first 50 chars):', result.substring(0, 50) + '...');
             const imgElement = document.getElementById('gladeResultImage');
-            imgElement.src = result;
+            imgElement.src = result;  // This is now a data:image/png;base64,... URL
             
             // Make sure the results div is visible
             document.getElementById('gladeResults').style.display = 'block';

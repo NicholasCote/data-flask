@@ -734,8 +734,11 @@ def taxi_weather_analysis(self):
 def get_glade_picture_task(self):
     """
     Process GLADE data and create a wind speed visualization as a Celery task.
-    This version doesn't use Dask to avoid resource conflicts within Celery workers.
+    Returns the image data directly instead of saving to a file.
     """
+    import io
+    import base64
+    
     # Set initial progress
     self.update_state(state='PROGRESS', meta={'progress': 0, 'status': 'Initializing task'})
     
@@ -745,7 +748,6 @@ def get_glade_picture_task(self):
         data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
 
         # Use a smaller time range to reduce processing time
-        # In the future, this could be a parameter passed to the task
         year_month_pattern = '202101'  # Just January 2021
         data_spec = data_dir + year_month_pattern + '/'
 
@@ -764,7 +766,6 @@ def get_glade_picture_task(self):
         var_v = 'V10N'
 
         # Select data for a specific geographic location (Cheyenne, Wyoming)
-        # In the future, these coordinates could be parameters passed to the task
         self.update_state(state='PROGRESS', meta={'progress': 70, 'status': 'Extracting location data'})
         cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
         city = cheyenne
@@ -781,28 +782,19 @@ def get_glade_picture_task(self):
         self.update_state(state='PROGRESS', meta={'progress': 90, 'status': 'Generating visualization'})
         figure = plot_winds(u_values, v_values, ds_u.time)
 
-        self.update_state(state='PROGRESS', meta={'progress': 95, 'status': 'Saving visualization'})
+        self.update_state(state='PROGRESS', meta={'progress': 95, 'status': 'Encoding image data'})
         
-        # Use media directory for user-generated content
-        media_root = getattr(settings, 'MEDIA_ROOT', os.path.join(os.getcwd(), 'media'))
-        os.makedirs(media_root, exist_ok=True)
-        
-        filename = 'glade_data_access.png'
-        plotfile = os.path.join(media_root, filename)
-        
-        logging.info(f"Saving figure to: {plotfile}")
-        figure.savefig(plotfile, dpi=100)
+        # Save figure to a BytesIO object instead of a file
+        img_buffer = io.BytesIO()
+        figure.savefig(img_buffer, format='png', dpi=100)
         plt.close(figure)  # Clean up matplotlib resources
         
-        # Verify the file was created
-        if os.path.exists(plotfile):
-            logging.info(f"File created successfully: {plotfile}, size: {os.path.getsize(plotfile)} bytes")
-        else:
-            logging.error(f"Failed to create file at: {plotfile}")
-            
-        # Return the URL path
-        media_url = getattr(settings, 'MEDIA_URL', '/media/')
-        return f'{media_url}{filename}'
+        # Get the image data and encode it as base64
+        img_buffer.seek(0)
+        img_data = base64.b64encode(img_buffer.read()).decode('utf-8')
+        
+        # Return the base64-encoded image data with appropriate prefix for HTML
+        return f'data:image/png;base64,{img_data}'
 
     except Exception as e:
         logging.error(f"Error in GLADE picture task: {str(e)}")
