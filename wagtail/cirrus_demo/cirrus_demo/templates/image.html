@@ -115,18 +115,25 @@
             document.getElementById('zipCode').addEventListener('change', function() {
                 const zipCode = this.value;
                 if (/^\d{5}$/.test(zipCode)) {
+                    // Make sure to use the correct URL pattern with app URL prefix if needed
+                    // If your Django app is mounted at a sub-path, prepend it here
                     fetch(`/lookup-zipcode/${zipCode}/`)
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                            }
+                            return response.json();
+                        })
                         .then(data => {
                             if (data.success) {
                                 document.getElementById('locationName').value = `${data.city}, ${data.state}`;
                             } else {
-                                document.getElementById('locationName').value = 'Location not found';
+                                document.getElementById('locationName').value = 'Using default location';
                             }
                         })
                         .catch(error => {
                             console.error('Error looking up zip code:', error);
-                            document.getElementById('locationName').value = 'Error looking up location';
+                            document.getElementById('locationName').value = 'Using default location (API error)';
                         });
                 }
             });
