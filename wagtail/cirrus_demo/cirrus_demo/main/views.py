@@ -1,9 +1,12 @@
-from django.shortcuts import render, redirect
+from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare, taxi_weather_analysis, get_glade_picture_task
+from django.shortcuts import render
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .glade_functions import get_glade_picture_task
+import json
+import logging
 import os
 from pathlib import Path
-from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare, taxi_weather_analysis, get_glade_picture_task
-from .glade_functions import get_glade_picture
 
 def home(request):
     return render(request, 'base.html')
@@ -63,12 +66,53 @@ def glade_image(request):
     """
     return render(request, 'image.html')
 
+@csrf_exempt
 def trigger_glade_analysis(request):
     """
-    View for starting the GLADE picture task.
+    View for starting the GLADE picture task with custom parameters.
     """
-    task = get_glade_picture_task.delay()
-    return JsonResponse({'task_id': task.id})
+    if request.method == 'POST':
+        try:
+            # Parse JSON data from request body
+            data = json.loads(request.body)
+            zip_code = data.get('zipCode', '82001')  # Default to Cheyenne if not provided
+            start_date = data.get('startDate', '2021-01')
+            end_date = data.get('endDate', '2021-02')
+            
+            # Get lat/lon from zip code
+            location_data = get_location_from_zip(zip_code)
+            
+            if not location_data:
+                return JsonResponse({
+                    'error': f'Could not find location for zip code {zip_code}'
+                }, status=400)
+            
+            # Extract year and month values
+            start_year, start_month = start_date.split('-')
+            end_year, end_month = end_date.split('-')
+            
+            # Start the Celery task with the provided parameters
+            task = get_glade_picture_task.delay(
+                location_data['lat'], 
+                location_data['lon'],
+                f"{start_year}{start_month}",
+                f"{end_year}{end_month}"
+            )
+            
+            return JsonResponse({'task_id': task.id})
+        
+        except Exception as e:
+            logging.error(f"Error triggering GLADE analysis: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        # For backwards compatibility, handle GET requests with default params
+        task = get_glade_picture_task.delay(
+            41.14,            # Cheyenne latitude
+            360 - 104.82,     # Cheyenne longitude
+            '202101',         # Start period
+            '202102'          # End period
+        )
+        return JsonResponse({'task_id': task.id})
 
 def check_glade_task(request, task_id):
     """

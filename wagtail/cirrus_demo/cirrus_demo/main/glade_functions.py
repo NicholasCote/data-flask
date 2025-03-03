@@ -1,8 +1,11 @@
-import xarray as xr
-import numpy as np
-from matplotlib import pyplot as plt
 from distributed import Client
+from django.http import JsonResponse
+import logging
+from matplotlib import pyplot as plt
+import numpy as np
 import os
+import requests
+import xarray as xr
 
 def get_dataset(filepath_pattern, use_grib, parallel):
     """ Given a file pattern specification and a file format type, return an xarray dataset 
@@ -164,3 +167,65 @@ def get_glade_picture():
             cluster.close()
 
     return '/static/glade_data_access.png'
+
+def lookup_zipcode(request, zip_code):
+    """
+    View for looking up location information based on zip code.
+    """
+    location_data = get_location_from_zip(zip_code)
+    
+    if location_data:
+        return JsonResponse({
+            'success': True,
+            'city': location_data['city'],
+            'state': location_data['state'],
+            'lat': location_data['lat'],
+            'lon': location_data['lon']
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'error': f'Could not find location for zip code {zip_code}'
+        })
+
+def get_location_from_zip(zip_code):
+    """
+    Helper function to get latitude and longitude from a zip code.
+    Uses the Nominatim API through OpenStreetMap.
+    """
+    try:
+        # Use OpenStreetMap Nominatim API to convert zip code to lat/lon
+        # Make sure to set a proper User-Agent as per Nominatim usage policy
+        headers = {
+            'User-Agent': 'NCAR_Stratus_UI/1.0'  # Replace with your app name/version
+        }
+        
+        response = requests.get(
+            f"https://nominatim.openstreetmap.org/search?postalcode={zip_code}&country=USA&format=json",
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                # Take the first result
+                result = data[0]
+                
+                # Convert longitude to 0-360 range as needed by the ERA5 data
+                lon = float(result['lon'])
+                if lon < 0:
+                    lon = 360 + lon
+                
+                return {
+                    'lat': float(result['lat']),
+                    'lon': lon,
+                    'city': result.get('name', 'Unknown'),
+                    'state': result.get('display_name', '').split(', ')[-2]
+                }
+        
+        logging.error(f"Failed to get location for zip code {zip_code}: {response.status_code}")
+        return None
+        
+    except Exception as e:
+        logging.error(f"Error in get_location_from_zip: {str(e)}")
+        return None

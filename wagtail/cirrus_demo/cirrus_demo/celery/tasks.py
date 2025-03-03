@@ -731,58 +731,83 @@ def taxi_weather_analysis(self):
         raise self.retry(exc=exc, countdown=60*5)  # Retry after 5 minutes
     
 @shared_task(bind=True)
-def get_glade_picture_task(self):
+def get_glade_picture_task(self, latitude=41.14, longitude=360-104.82, start_period='202101', end_period='202102'):
     """
     Process GLADE data and create a wind speed visualization as a Celery task.
-    Returns the image data directly instead of saving to a file.
+    
+    Args:
+        latitude: Float latitude of the location to analyze
+        longitude: Float longitude of the location (in 0-360 format)
+        start_period: Start date in YYYYMM format
+        end_period: End date in YYYYMM format
+        
+    Returns:
+        Base64 encoded image data
     """
     import io
     import base64
     
     # Set initial progress
-    self.update_state(state='PROGRESS', meta={'progress': 0, 'status': 'Initializing task'})
+    self.update_state(state='PROGRESS', meta={'progress': 0, 'status_message': 'Initializing task'})
     
     try:
         # This subdirectory contains surface analysis data on a 0.25 degree global grid
-        self.update_state(state='PROGRESS', meta={'progress': 10, 'status': 'Preparing to load data'})
+        self.update_state(state='PROGRESS', meta={'progress': 10, 'status_message': 'Preparing to load data'})
         data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
 
-        # Use a smaller time range to reduce processing time
-        year_month_pattern = '202101'  # Just January 2021
-        data_spec = data_dir + year_month_pattern + '/'
+        # Create a pattern that matches the requested date range
+        if start_period[:4] == end_period[:4]:  # Same year
+            year = start_period[:4]
+            month_pattern = '{'
+            for month in range(int(start_period[4:]), int(end_period[4:]) + 1):
+                month_pattern += f"{month:02d},"
+            month_pattern = month_pattern.rstrip(',') + '}'
+            
+            year_month_pattern = f"{year}{month_pattern}"
+        else:
+            # Use a glob pattern that includes dates across multiple years
+            year_start = start_period[:4]
+            month_start = start_period[4:]
+            year_end = end_period[:4]
+            month_end = end_period[4:]
+            
+            # Simplified pattern for demonstration - in production you might want 
+            # to generate a more precise pattern that only includes the months requested
+            year_month_pattern = f"{year_start}{month_start}*"
+            
+        data_spec = f"{data_dir}{year_month_pattern}/"
 
         # These filename patterns refer to u- and v-components of winds at 10 meters
         filename_pattern_u = 'e5.oper.an.sfc.228_131_u10n.ll025sc.*'
         filename_pattern_v = 'e5.oper.an.sfc.228_132_v10n.ll025sc.*'  
 
         # Load datasets - without parallel processing
-        self.update_state(state='PROGRESS', meta={'progress': 30, 'status': 'Loading U-component data'})
+        self.update_state(state='PROGRESS', meta={'progress': 30, 'status_message': 'Loading U-component data'})
         ds_u = get_dataset(data_spec + filename_pattern_u, False, parallel=False)
         
-        self.update_state(state='PROGRESS', meta={'progress': 50, 'status': 'Loading V-component data'})
+        self.update_state(state='PROGRESS', meta={'progress': 50, 'status_message': 'Loading V-component data'})
         ds_v = get_dataset(data_spec + filename_pattern_v, False, parallel=False)
 
         var_u = 'U10N'
         var_v = 'V10N'
 
-        # Select data for a specific geographic location (Cheyenne, Wyoming)
-        self.update_state(state='PROGRESS', meta={'progress': 70, 'status': 'Extracting location data'})
-        cheyenne = {'lat': 41.14, 'lon': 360 - 104.82}
-        city = cheyenne
+        # Select data for the specified geographic location
+        self.update_state(state='PROGRESS', meta={'progress': 70, 'status_message': 'Extracting location data'})
+        location = {'lat': latitude, 'lon': longitude}
 
         # Select the nearest grid cell to our lat/lon location
-        u = get_point_array(ds_u, city['lat'], city['lon'], var_u)
-        v = get_point_array(ds_v, city['lat'], city['lon'], var_v)
+        u = get_point_array(ds_u, location['lat'], location['lon'], var_u)
+        v = get_point_array(ds_v, location['lat'], location['lon'], var_v)
 
         # Load the data into memory
-        self.update_state(state='PROGRESS', meta={'progress': 80, 'status': 'Calculating wind speeds'})
+        self.update_state(state='PROGRESS', meta={'progress': 80, 'status_message': 'Calculating wind speeds'})
         u_values = u.values
         v_values = v.values
 
-        self.update_state(state='PROGRESS', meta={'progress': 90, 'status': 'Generating visualization'})
+        self.update_state(state='PROGRESS', meta={'progress': 90, 'status_message': 'Generating visualization'})
         figure = plot_winds(u_values, v_values, ds_u.time)
 
-        self.update_state(state='PROGRESS', meta={'progress': 95, 'status': 'Encoding image data'})
+        self.update_state(state='PROGRESS', meta={'progress': 95, 'status_message': 'Encoding image data'})
         
         # Save figure to a BytesIO object instead of a file
         img_buffer = io.BytesIO()
