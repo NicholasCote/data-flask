@@ -79,14 +79,34 @@ def wind_speed(u, v, units=None):
         speed = 2.369 * speed
     return speed
 
-def plot_winds(u_values, v_values, time_values):
+def plot_winds(u_values, v_values, time_values, location_name=None):
     """ Compute wind speed values and plot them on a line plot.
+    
+    Args:
+        u_values: Wind U component values
+        v_values: Wind V component values
+        time_values: Corresponding time values
+        location_name: Optional name of the location for the title
     """
     winds = wind_speed(u_values, v_values, units='mph')
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    
     ax.plot(time_values, winds, color='r')
-    ax.set_title('Hourly Average Wind Speeds for Cheyenne, Wyoming')
+    
+    title = 'Hourly Average Wind Speeds'
+    if location_name:
+        title += f' for {location_name}'
+        
+    ax.set_title(title)
     ax.set_ylabel('Miles Per Hour')
+    
+    # Add a grid for better readability
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    # Make tick labels on x-axis more readable
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    
     return fig
 
 MAX_WORKERS = 1
