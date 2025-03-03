@@ -18,6 +18,7 @@ urlpatterns = [
     path('analysis/', views.analysis_view, name='analysis'),
     path('browse/', views.directory_browser, name='directory_browser'),    
     path('glade-image/', views.glade_image, name='glade_image'),
+    path('lookup-zipcode/<str:zip_code>/', views.lookup_zipcode, name='lookup_zipcode'),
     path('trigger-glade-analysis/', views.trigger_glade_analysis, name='trigger_glade_analysis'),
     path('check-glade-task/<str:task_id>/', views.check_glade_task, name='check_glade_task'),
     path('trigger-analysis/', views.trigger_analysis, name='trigger_analysis'),

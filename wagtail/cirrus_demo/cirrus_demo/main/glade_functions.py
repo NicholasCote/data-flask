@@ -168,26 +168,6 @@ def get_glade_picture():
 
     return '/static/glade_data_access.png'
 
-def lookup_zipcode(request, zip_code):
-    """
-    View for looking up location information based on zip code.
-    """
-    location_data = get_location_from_zip(zip_code)
-    
-    if location_data:
-        return JsonResponse({
-            'success': True,
-            'city': location_data['city'],
-            'state': location_data['state'],
-            'lat': location_data['lat'],
-            'lon': location_data['lon']
-        })
-    else:
-        return JsonResponse({
-            'success': False,
-            'error': f'Could not find location for zip code {zip_code}'
-        })
-
 def get_location_from_zip(zip_code):
     """
     Helper function to get latitude and longitude from a zip code.
