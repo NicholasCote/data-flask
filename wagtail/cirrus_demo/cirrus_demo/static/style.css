@@ -4,6 +4,10 @@
 /* DONE */
 /* The top level navbar */
 
+.bg-primary {
+    background-color: #1A658F !important;
+}
+
 img.logo {
     height: 100px !important;
     width: auto;
