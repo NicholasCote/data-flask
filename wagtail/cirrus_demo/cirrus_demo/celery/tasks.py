@@ -1,4 +1,5 @@
 from ..main.glade_functions import get_dataset, get_point_array, plot_winds, get_local_cluster
+from ..main.temp_functions import plot_temperature
 from celery import shared_task
 from django.conf import settings
 from io import StringIO
@@ -831,3 +832,94 @@ def get_glade_picture_task(self, latitude=41.14, longitude=360-104.82, start_per
             ds_u.close()
         if 'ds_v' in locals():
             ds_v.close()
+
+@shared_task(bind=True)
+def get_temperature_picture_task(self, latitude=41.14, longitude=360-104.82, 
+                                start_period='202101', end_period='202102',
+                                location_name='Cheyenne, Wyoming'):
+    """
+    Process GLADE data and create a 2m temperature visualization.
+    
+    Args:
+        latitude: Float latitude of the location to analyze
+        longitude: Float longitude of the location (in 0-360 format)
+        start_period: Start date in YYYYMM format
+        end_period: End date in YYYYMM format
+        location_name: Name of the location for display in the plot title
+        
+    Returns:
+        Base64 encoded image data
+    """
+    import io
+    import base64
+    
+    # Set initial progress
+    self.update_state(state='PROGRESS', meta={'progress': 0, 'status_message': 'Initializing task'})
+    
+    try:
+        # This subdirectory contains surface analysis data on a 0.25 degree global grid
+        self.update_state(state='PROGRESS', meta={'progress': 10, 'status_message': 'Preparing to load data'})
+        data_dir = '/glade/campaign/collections/rda/data/ds633.0/e5.oper.an.sfc/'
+
+        # Create a pattern that matches the requested date range
+        if start_period[:4] == end_period[:4]:  # Same year
+            year = start_period[:4]
+            month_pattern = '{'
+            for month in range(int(start_period[4:]), int(end_period[4:]) + 1):
+                month_pattern += f"{month:02d},"
+            month_pattern = month_pattern.rstrip(',') + '}'
+            
+            year_month_pattern = f"{year}{month_pattern}"
+        else:
+            # Simplified pattern for demonstration
+            year_month_pattern = f"{start_period[:4]}{start_period[4:]}*"
+            
+        data_spec = f"{data_dir}{year_month_pattern}/"
+
+        # This filename pattern refers to 2m temperature data
+        # Adjust this pattern to match the actual file pattern for 2m temperature
+        filename_pattern_temp = 'e5.oper.an.sfc.128_167_2t.ll025sc.*'  
+
+        # Load dataset - without parallel processing
+        self.update_state(state='PROGRESS', meta={'progress': 40, 'status_message': 'Loading temperature data'})
+        ds_temp = get_dataset(data_spec + filename_pattern_temp, False, parallel=False)
+
+        var_temp = 'VAR_2T'  # Adjust this to match the actual variable name in the data
+
+        # Select data for the specified geographic location
+        self.update_state(state='PROGRESS', meta={'progress': 70, 'status_message': 'Extracting location data'})
+        location = {'lat': latitude, 'lon': longitude}
+
+        # Select the nearest grid cell to our lat/lon location
+        temp = get_point_array(ds_temp, location['lat'], location['lon'], var_temp)
+
+        # Load the data into memory
+        self.update_state(state='PROGRESS', meta={'progress': 80, 'status_message': 'Processing temperature values'})
+        temp_values = temp.values
+
+        self.update_state(state='PROGRESS', meta={'progress': 90, 'status_message': 'Generating visualization'})
+        # Create the temperature plot
+        figure = plot_temperature(temp_values, ds_temp.time, location_name)
+
+        self.update_state(state='PROGRESS', meta={'progress': 95, 'status_message': 'Encoding image data'})
+        
+        # Save figure to a BytesIO object
+        img_buffer = io.BytesIO()
+        figure.savefig(img_buffer, format='png', dpi=100)
+        plt.close(figure)  # Clean up matplotlib resources
+        
+        # Get the image data and encode it as base64
+        img_buffer.seek(0)
+        img_data = base64.b64encode(img_buffer.read()).decode('utf-8')
+        
+        # Return the base64-encoded image data with appropriate prefix for HTML
+        return f'data:image/png;base64,{img_data}'
+
+    except Exception as e:
+        logging.error(f"Error in temperature picture task: {str(e)}")
+        raise
+        
+    finally:
+        # Clean up any open file handles
+        if 'ds_temp' in locals():
+            ds_temp.close()

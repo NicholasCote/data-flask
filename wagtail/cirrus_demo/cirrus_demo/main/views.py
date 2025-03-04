@@ -1,4 +1,4 @@
-from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare, taxi_weather_analysis, get_glade_picture_task
+from ..celery.tasks import analyze_taxi_data, max_taxi_fare, total_taxi_fare, taxi_weather_analysis, get_glade_picture_task, get_temperature_picture_task
 from .glade_functions import get_location_from_zip
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -153,6 +153,86 @@ def check_glade_task(request, task_id):
         if task_result.info:
             response_data['progress'] = task_result.info.get('progress', 0)
             response_data['status_message'] = task_result.info.get('status', '')
+    else:
+        response_data['status'] = task_result.state
+        
+    return JsonResponse(response_data)
+
+def temperature_image(request):
+    """
+    View for the temperature visualization page.
+    """
+    return render(request, 'temperature.html')
+
+@csrf_exempt
+def trigger_temperature_analysis(request):
+    """
+    View for starting the temperature picture task.
+    """
+    if request.method == 'POST':
+        try:
+            # Parse JSON data from request body
+            data = json.loads(request.body)
+            zip_code = data.get('zipCode', '82001')  # Default to Cheyenne if not provided
+            start_date = data.get('startDate', '2021-01')
+            end_date = data.get('endDate', '2021-02')
+            
+            # Get location data from zip code
+            location_data = get_location_from_zip(zip_code)
+            
+            if not location_data:
+                return JsonResponse({
+                    'error': f'Could not find location for zip code {zip_code}'
+                }, status=400)
+            
+            # Extract year and month values
+            start_year, start_month = start_date.split('-')
+            end_year, end_month = end_date.split('-')
+            
+            # Start the Celery task with the provided parameters
+            task = get_temperature_picture_task.delay(
+                location_data['lat'], 
+                location_data['lon'],
+                f"{start_year}{start_month}",
+                f"{end_year}{end_month}",
+                location_data['display_name']
+            )
+            
+            return JsonResponse({'task_id': task.id})
+        
+        except Exception as e:
+            logging.error(f"Error triggering temperature analysis: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        # For backwards compatibility, handle GET requests with default params
+        task = get_temperature_picture_task.delay(
+            41.14,            # Cheyenne latitude
+            360 - 104.82,     # Cheyenne longitude
+            '202101',         # Start period
+            '202102',         # End period
+            'Cheyenne, Wyoming'  # Default location name
+        )
+        return JsonResponse({'task_id': task.id})
+
+def check_temperature_task(request, task_id):
+    """
+    View for checking the status of the temperature picture task.
+    """
+    task_result = get_temperature_picture_task.AsyncResult(task_id)
+    
+    response_data = {'task_id': task_id}
+    
+    if task_result.successful():
+        response_data['status'] = 'SUCCESS'
+        response_data['result'] = task_result.result
+    elif task_result.failed():
+        response_data['status'] = 'FAILURE'
+        response_data['error'] = str(task_result.result)
+    elif task_result.state == 'PROGRESS':
+        response_data['status'] = 'PROGRESS'
+        if task_result.info:
+            response_data['progress'] = task_result.info.get('progress', 0)
+            response_data['status_message'] = task_result.info.get('status_message', '')
     else:
         response_data['status'] = task_result.state
         
