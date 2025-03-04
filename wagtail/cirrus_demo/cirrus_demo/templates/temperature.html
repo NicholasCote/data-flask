@@ -317,7 +317,17 @@
             
             function checkTaskStatus(taskId) {
                 fetch(`/check-temperature-task/${taskId}/`)
-                    .then(response => response.json())
+                    .then(response => {
+                        // Log status for debugging
+                        console.log('Status check response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json().catch(err => {
+                            console.error('Error parsing JSON:', err);
+                            throw new Error('Invalid JSON in response');
+                        });
+                    })
                     .then(data => {
                         console.log('Task status:', data);
                         updateProgressUI(data);
@@ -335,7 +345,20 @@
                     })
                     .catch(error => {
                         console.error('Error checking task status:', error);
-                        showError('Error checking task status: ' + error.message);
+                        
+                        // For debugging: log the URL we're trying to fetch
+                        console.log('Attempted to fetch:', `/check-temperature-task/${taskId}/`);
+                        
+                        // Check if we should retry
+                        if (!window.taskStatusRetries) window.taskStatusRetries = 0;
+                        if (window.taskStatusRetries < 3) {
+                            window.taskStatusRetries++;
+                            console.log(`Retrying task status check (${window.taskStatusRetries}/3)...`);
+                            setTimeout(() => checkTaskStatus(taskId), 2000);
+                        } else {
+                            window.taskStatusRetries = 0;
+                            showError('Error checking task status: ' + error.message);
+                        }
                     });
             }
             
