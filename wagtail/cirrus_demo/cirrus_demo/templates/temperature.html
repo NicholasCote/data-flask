@@ -224,6 +224,17 @@
                         });
                 }
             });
+            
+            // Validate date range
+            document.getElementById('endDate').addEventListener('change', function() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = this.value;
+                
+                if (startDate > endDate) {
+                    alert('End date must be after start date');
+                    this.value = startDate;
+                }
+            });
         
             document.getElementById('tempAnalyzeBtn').addEventListener('click', function() {
                 // Form validation

@@ -45,11 +45,11 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="startDate" class="form-label">Start Date</label>
-                                <input type="month" class="form-control" id="startDate" min="2021-01" max="2022-12" value="2021-01" required>
+                                <input type="month" class="form-control" id="startDate" min="1940-01" max="2024-12" value="2021-01" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="endDate" class="form-label">End Date</label>
-                                <input type="month" class="form-control" id="endDate" min="2021-01" max="2022-12" value="2021-02" required>
+                                <input type="month" class="form-control" id="endDate" min="1940-01" max="2024-12" value="2021-02" required>
                             </div>
                         </div>
                         
@@ -100,6 +100,7 @@
                         <div class="card-footer">
                             <p><small>Data source: ERA5 reanalysis data from the Research Data Archive</small></p>
                             <p><small>Time period: <span id="resultTimeRange">January 2021 - February 2021</span></small></p>
+                            <div id="resultMetadata"></div>
                         </div>
                     </div>
                 </div>
@@ -111,6 +112,49 @@
             </div>
         </div>
         <script>
+            // Function to calculate the difference in months between two dates
+            function getMonthDifference(startDate, endDate) {
+                const start = new Date(startDate + "-01");
+                const end = new Date(endDate + "-01");
+                
+                return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+            }
+            
+            // Validate date range when either date changes
+            document.getElementById('startDate').addEventListener('change', validateDateRange);
+            document.getElementById('endDate').addEventListener('change', validateDateRange);
+            
+            function validateDateRange() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                if (!startDate || !endDate) return; // Skip validation if either field is empty
+                
+                // Check if start date is after end date
+                if (startDate > endDate) {
+                    alert('End date must be after start date');
+                    document.getElementById('endDate').value = startDate;
+                    return;
+                }
+                
+                // Calculate the difference in months
+                const monthDiff = getMonthDifference(startDate, endDate);
+                
+                // Show error if the range is more than 12 months
+                if (monthDiff > 11) { // 11 because we're including both the start and end months
+                    const errorMsg = "A range over 12 months is not available due to processing time and resource requirements. Please select a shorter range.";
+                    alert(errorMsg);
+                    
+                    // Reset the end date to be 12 months after the start date
+                    const startDateObj = new Date(startDate + "-01");
+                    const newEndDateObj = new Date(startDateObj);
+                    newEndDateObj.setMonth(startDateObj.getMonth() + 11);
+                    
+                    const newEndDate = newEndDateObj.toISOString().slice(0, 7); // Format as YYYY-MM
+                    document.getElementById('endDate').value = newEndDate;
+                }
+            }
+
             // Lookup zip code when entered
             document.getElementById('zipCode').addEventListener('change', function() {
                 const zipCode = this.value;
@@ -163,6 +207,13 @@
                 
                 if (!/^\d{5}$/.test(zipCode)) {
                     alert('Please enter a valid 5-digit US zip code');
+                    return;
+                }
+                
+                // Validate date range doesn't exceed 12 months
+                const monthDiff = getMonthDifference(startDate, endDate);
+                if (monthDiff > 11) {
+                    alert("A range over 12 months is not available due to processing time and resource requirements. Please select a shorter range.");
                     return;
                 }
                 
@@ -289,6 +340,25 @@
                 const imgElement = document.getElementById('gladeResultImage');
                 imgElement.src = result;  // data:image/png;base64,... URL
                 
+                // Update result location with detailed information
+                const locationName = document.getElementById('locationName').value;
+                document.getElementById('resultLocationName').textContent = locationName;
+                
+                // Format the time range
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                document.getElementById('resultTimeRange').textContent = formatDateRange(startDate, endDate);
+                
+                // Add metadata to the results card
+                const metadataDiv = document.getElementById('resultMetadata');
+                if (metadataDiv) {
+                    const zipCode = document.getElementById('zipCode').value;
+                    metadataDiv.innerHTML = `
+                        <p><small>ZIP Code: ${zipCode}</small></p>
+                        <p><small>Location: ${locationName}</small></p>
+                    `;
+                }
+
                 // Make sure the results div is visible
                 document.getElementById('gladeResults').style.display = 'block';
                 
