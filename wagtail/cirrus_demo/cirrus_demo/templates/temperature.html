@@ -138,17 +138,19 @@
                             return response.json();
                         })
                         .then(data => {
+                            console.log("ZIP code lookup response:", data); // Add this to debug
+                            
                             if (data.success) {
-                                // Update the location name field
-                                document.getElementById('locationName').value = data.display_name;
+                                // Update the location name field - add fallback for undefined values
+                                document.getElementById('locationName').value = data.display_name || `${data.city || 'Unknown'}, ${data.state || 'Unknown'}`;
                                 
                                 // Update the popover content with detailed location information
                                 const popoverContent = `
                                     <div class="location-details">
-                                        <p><strong>City:</strong> ${data.city}</p>
+                                        <p><strong>City:</strong> ${data.city || 'Unknown'}</p>
                                         ${data.county ? `<p><strong>County:</strong> ${data.county}</p>` : ''}
-                                        <p><strong>State:</strong> ${data.state}</p>
-                                        <p><strong>Coordinates:</strong> ${data.lat.toFixed(4)}, ${(data.lon > 180 ? data.lon - 360 : data.lon).toFixed(4)}</p>
+                                        <p><strong>State:</strong> ${data.state || 'Unknown'}</p>
+                                        <p><strong>Coordinates:</strong> ${(data.lat || 0).toFixed(4)}, ${((data.lon > 180 ? data.lon - 360 : data.lon) || 0).toFixed(4)}</p>
                                     </div>
                                 `;
                                 
