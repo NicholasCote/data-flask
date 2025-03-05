@@ -60,11 +60,11 @@ def check_total_task_status(request, task_id):
 def analysis_view(request):
     return render(request, 'analysis.html')
 
-def glade_image(request):
+def wind_plot(request):
     """
     View for the GLADE image visualization page.
     """
-    return render(request, 'image.html')
+    return render(request, 'wind.html')
 
 def lookup_zipcode(request, zip_code):
     """
