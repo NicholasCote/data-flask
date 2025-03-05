@@ -5,7 +5,8 @@
 /* The top level navbar */
 
 .bg-primary {
-    background-color: #1A658F !important;
+    --bs-primary-rgb: 26, 101, 143; /* RGB values for #1A658F */
+    background-color: rgba(var(--bs-primary-rgb), var(--bs-bg-opacity)) !important;
     text-align: center !important;
 }
 
