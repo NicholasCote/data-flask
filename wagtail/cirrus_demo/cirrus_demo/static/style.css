@@ -6,10 +6,12 @@
 
 .bg-primary {
     background-color: #1A658F !important;
+    text-align: center !important;
 }
 
 .btn-primary {
     background-color: #1A658F !important;
+    border-color: #1A658F !important;
 }
 
 img.logo {
@@ -197,18 +199,21 @@ h1 {
     text-align: center;
     font-size: 3rem !important;
     font-weight: 700;
+    color: #007fa3 !important;
 }
 
 h2 {
     text-align: center;
     font-size: 2.25rem !important;
     font-weight: 600;
+    color: #007fa3 !important;
 }
 
 h3 {
     font-size: 1.5rem !important;
     font-weight: 700;
     color: #007fa3 !important;
+    text-align: center !important;
 }
 
 h4 {
