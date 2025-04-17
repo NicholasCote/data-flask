@@ -9,7 +9,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: "incommon"
 spec:
-  ingressClassName: nginx
+  ingressClassName: nginx-internal
   tls:
     - hosts:
       - {{ .Values.webapp.fqdn}}
