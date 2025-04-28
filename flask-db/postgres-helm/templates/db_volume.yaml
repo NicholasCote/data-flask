@@ -6,7 +6,7 @@ metadata:
 spec:
     accessModes:
         - ReadWriteOnce
-    storageClassName: nwceph-kubepv
+    storageClassName: rook-ceph-block
     resources:
         requests:
             storage: {{ .Values.db.volume.size }} 
