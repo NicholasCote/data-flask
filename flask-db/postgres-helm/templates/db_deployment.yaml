@@ -29,6 +29,8 @@ spec:
             secretKeyRef:
               name: {{ .Values.webapp.name }}-esos
               key: {{ .Values.db.passwordKey }}
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         ports:
         - containerPort: 5432
         volumeMounts:
