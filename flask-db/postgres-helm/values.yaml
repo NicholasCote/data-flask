@@ -1,0 +1,22 @@
+replicaCount: 1
+
+webapp:
+  name: ncote-db-test
+  group: ncote-db-test
+  path: /
+  tls:
+    fqdn: ncote-db-test.nickknows.net
+    secretName: incommon-cert-ncote-db-test
+  container: 
+    image: ncote/flask-db-demo:v1
+    port: 5000
+    memory: 1G
+    cpu: 2
+db:
+  name: flask-db-demo
+  usernameKey: user
+  passwordKey: pass
+  secretPath: ncote/flask-db-demo
+  volume:
+    name: flask-db-demo-pv
+    size: 1Gi

@@ -1,0 +1,115 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>K8s PV Demo: Notes App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        .note { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+        button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        .container { display: flex; flex-direction: column; }
+        .status { padding: 10px; margin-top: 20px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Kubernetes PV Demo: Notes App</h1>
+    <div class="container">
+        <div id="status" class="status"></div>
+        <button id="init-db">Initialize Database</button>
+        <h2>Create a New Note</h2>
+        <textarea id="note-content" placeholder="Enter your note here..."></textarea>
+        <button id="create-note">Save Note</button>
+        <h2>Your Notes</h2>
+        <div id="notes-list"></div>
+    </div>
+
+    <script>
+        // Initialize the database
+        document.getElementById('init-db').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/init-db');
+                const data = await response.json();
+                showStatus(data.message, 'success');
+                fetchNotes();
+            } catch (error) {
+                showStatus('Failed to initialize database: ' + error, 'error');
+            }
+        });
+
+        // Create a new note
+        document.getElementById('create-note').addEventListener('click', async () => {
+            const content = document.getElementById('note-content').value;
+            if (!content) {
+                showStatus('Note content cannot be empty', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/notes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content }),
+                });
+                
+                if (response.ok) {
+                    document.getElementById('note-content').value = '';
+                    showStatus('Note created successfully!', 'success');
+                    fetchNotes();
+                } else {
+                    const error = await response.json();
+                    showStatus(error.error || 'Failed to create note', 'error');
+                }
+            } catch (error) {
+                showStatus('Failed to create note: ' + error, 'error');
+            }
+        });
+
+        // Fetch and display notes
+        async function fetchNotes() {
+            try {
+                const response = await fetch('/notes');
+                const notes = await response.json();
+                
+                const notesList = document.getElementById('notes-list');
+                notesList.innerHTML = '';
+                
+                if (notes.length === 0) {
+                    notesList.innerHTML = '<p>No notes yet. Create one above!</p>';
+                    return;
+                }
+                
+                notes.forEach(note => {
+                    const noteElement = document.createElement('div');
+                    noteElement.className = 'note';
+                    noteElement.innerHTML = `
+                        <p>${note.content}</p>
+                        <small>Created: ${new Date(note.created_at).toLocaleString()}</small>
+                    `;
+                    notesList.appendChild(noteElement);
+                });
+            } catch (error) {
+                showStatus('Failed to fetch notes: ' + error, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+            setTimeout(() => {
+                statusElement.textContent = '';
+                statusElement.className = 'status';
+            }, 5000);
+        }
+
+        // Load notes on page load
+        fetchNotes();
+    </script>
+</body>
+</html>
