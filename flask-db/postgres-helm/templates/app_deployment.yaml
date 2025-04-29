@@ -26,7 +26,7 @@ spec:
               name: {{ .Values.webapp.name }}-esos
               key: {{ .Values.db.passwordKey }}
         - name: DB_HOST
-          value: "flask-db-demo.skitunes.svc.cluster.local"
+          value: {{ .Values.db.name }}.{{ .Release.Namespace }}.svc.cluster.local
         resources:
           limits:
             memory: {{ .Values.webapp.container.memory }}
