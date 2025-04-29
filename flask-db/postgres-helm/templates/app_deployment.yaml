@@ -30,7 +30,7 @@ spec:
             secretKeyRef:
               name: {{ .Values.webapp.name }}-esos
               key: {{ .Values.db.passwordKey }}
-        - name: DB_PASSWORD
+        - name: DB_HOST
           value: "postgres.skitunes.svc.cluster.local"
         resources:
           limits:
