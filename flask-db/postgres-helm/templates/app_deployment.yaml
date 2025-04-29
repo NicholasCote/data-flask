@@ -31,7 +31,7 @@ spec:
               name: {{ .Values.webapp.name }}-esos
               key: {{ .Values.db.passwordKey }}
         - name: DB_PASSWORD
-          value: postgres.skitunes.svc.cluster.local
+          value: "postgres.skitunes.svc.cluster.local"
         resources:
           limits:
             memory: {{ .Values.webapp.container.memory }}
