@@ -26,7 +26,9 @@ spec:
               name: {{ .Values.webapp.name }}-esos
               key: {{ .Values.db.passwordKey }}
         - name: DB_HOST
-          value: {{ .Values.db.name }}.{{ .Release.Namespace }}.svc.cluster.local
+          value: {{ .Values.db.host }}.{{ .Release.Namespace }}.svc.cluster.local
+        - name: DB_NAME
+          value: {{ .Values.db.name }}
         resources:
           limits:
             memory: {{ .Values.webapp.container.memory }}

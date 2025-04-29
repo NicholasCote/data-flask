@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.db.name }}
+  name: {{ .Values.db.host }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.db.name }}
+    app: {{ .Values.db.host }}
     group: {{ .Values.webapp.group }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.db.name }}
+      app: {{ .Values.db.host }}
   template:
     metadata:
       labels:
-        app: {{ .Values.db.name }}
+        app: {{ .Values.db.host }}
     spec:
       containers:
       - name: postgres
@@ -31,7 +31,12 @@ spec:
         volumeMounts:
           - mountPath: /var/lib/postgresql/data
             name: postgres-storage
+          - name: init-scripts
+            mountPath: /docker-entrypoint-initdb.d
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:
             claimName: {{ .Values.db.volume.name }}
+        - name: init-scripts
+          configMap:
+            name: postgres-init-scripts
