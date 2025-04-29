@@ -35,3 +35,4 @@ spec:
             cpu: {{ .Values.webapp.container.cpu }}
         ports:
         - containerPort: {{ .Values.webapp.container.port }}
+      nodeName: gingmachine
