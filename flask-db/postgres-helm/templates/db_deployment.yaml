@@ -19,12 +19,12 @@ spec:
       - name: postgres
         image: postgres:latest
         env:
-        - name: POSTGRES_USER
+        - name: PGUSER
           valueFrom:
             secretKeyRef:
               name: {{ .Values.webapp.name }}-esos
               key: {{ .Values.db.usernameKey }}
-        - name: POSTGRES_PASSWORD
+        - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ .Values.webapp.name }}-esos
