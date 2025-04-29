@@ -20,11 +20,6 @@ spec:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
         env:
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.webapp.name }}-esos
-              key: {{ .Values.db.usernameKey }}
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
