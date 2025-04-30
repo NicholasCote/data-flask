@@ -6,8 +6,8 @@ A Flask application for exploring items of value at NCAR on k8s
 ML Argo CD Status: https://argocd.k8s.ucar.edu/api/badge?name=mlc1-argocd&revision=true&showAppName=true
 NWSC Argo CD Status: https://argocd.k8s.ucar.edu/api/badge?name=nwc1-argocd&revision=true&showAppName=true
 
-https://mlc1-argo.k8s.ucar.edu/api/badge?name=ncote-db-demo&revision=true&showAppName=true
-https://nwc1-argo.k8s.ucar.edu/api/badge?name=ncote-celery-demo&revision=true&showAppName=true
+DB Demo Argo Status Link: https://mlc1-argo.k8s.ucar.edu/api/badge?name=ncote-db-demo&revision=true&showAppName=true
+Celery Demo Argo Status Link: https://nwc1-argo.k8s.ucar.edu/api/badge?name=ncote-celery-demo&revision=true&showAppName=true
 
 | GitHub Action | Status |
 | --- | --- |
