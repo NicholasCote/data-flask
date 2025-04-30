@@ -7,9 +7,8 @@ metadata:
     group: {{ .Values.webapp.group }}
   annotations:
     cert-manager.io/cluster-issuer: "incommon"
-    external-dns.alpha.kubernetes.io/target: "8.44.158.127"
 spec:
-  ingressClassName: nginx
+  ingressClassName: nginx-internal
   tls:
     - hosts:
       - {{ .Values.webapp.tls.fqdn }}

@@ -15,8 +15,6 @@ spec:
       labels:
         app: {{ .Values.db.host }}
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: gingmachine
       containers:
       - name: postgres
         image: postgres:latest

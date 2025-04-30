@@ -5,7 +5,7 @@ webapp:
   group: ncote-db-test
   path: /
   tls:
-    fqdn: ncote-db-test.nickknows.net
+    fqdn: ncote-db-test.k8s.ucar.edu
     secretName: incommon-cert-ncote-db-test
   container: 
     image: ncote/flask-db-demo:v1
