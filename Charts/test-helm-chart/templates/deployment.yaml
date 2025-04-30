@@ -22,6 +22,9 @@ spec:
             server: {{ .Values.webapp.volume1.server }}
             path: {{ .Values.webapp.volume1.path }}
             readOnly: {{ .Values.webapp.volume1.ro }}
+        - name: image-storage
+          persistentVolumeClaim:
+            claimName: ncote-test-app-pv
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
@@ -33,15 +36,6 @@ spec:
         - containerPort: {{ .Values.webapp.container.port }}
         volumeMounts:
         - mountPath: /glade/campaign
-          name: {{ .Values.webapp.volume1.name }}
-        env:
-        - name: NCOTE_GITHUB_OAUTH_ID
-          valueFrom:
-            secretKeyRef:
-              name: ncote-github-oauth
-              key: id
-        - name: NCOTE_GITHUB_OAUTH_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: ncote-github-oauth
-              key: secret
+          name: {{ .Values.webapp.volume1.name }}        
+        - name: image-storage
+          mountPath: /pv/images

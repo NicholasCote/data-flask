@@ -150,6 +150,7 @@ def get_glade_picture():
     cur_dir = os.getcwd()
     plotfile = cur_dir + '/app/static/glade_data_access.png'
     figure.savefig(plotfile, dpi=100)
+    figure.savefig('/pv/images', dpi=100)
 
     cluster.close()
 

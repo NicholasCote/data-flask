@@ -9,6 +9,22 @@ from distutils.dir_util import copy_tree
 def home():
     return render_template('home.html')
 
+@app.route('/images')
+def list_images():
+    """View function to list all images stored in the mounted PV."""
+    # Get all files in the image directory
+    try:
+        files = os.listdir('/pv/images')
+        # Filter to only include common image file types
+        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+        images = [f for f in files if os.path.splitext(f.lower())[1] in image_extensions]
+        return render_template('images.html', images=images)
+    except FileNotFoundError:
+        return render_template('images.html', images=[], error="Image directory not found")
+    except PermissionError:
+        return render_template('images.html', images=[], error="Permission denied when accessing image directory")
+
+
 @app.route('/object_browser')
 def object_browser():
     return render_template('object_browser.html')
