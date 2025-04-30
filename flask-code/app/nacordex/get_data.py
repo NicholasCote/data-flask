@@ -1,6 +1,7 @@
 import xarray as xr
 import numpy as np
 from matplotlib import pyplot as plt
+from datetime import datetime
 
 import os
 
@@ -150,7 +151,21 @@ def get_glade_picture():
     cur_dir = os.getcwd()
     plotfile = cur_dir + '/app/static/glade_data_access.png'
     figure.savefig(plotfile, dpi=100)
-    figure.savefig('/pv/images', dpi=100)
+
+    # Get current date and time
+    now = datetime.now()
+
+    # Extract individual components
+    year = now.year
+    month = now.month
+    day = now.day
+    hour = now.hour
+    minute = now.minute
+
+    formatted_date = f"{year}-{month:02d}-{day:02d}.{hour:02d}:{minute:02d}"
+
+    pv_file = '/pv/images/' + formatted_date + ".png"
+    figure.savefig(pv_file, dpi=100)
 
     cluster.close()
 
