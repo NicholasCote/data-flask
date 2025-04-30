@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:latest
+        image: docker.io/postgres/postgres:latest
         env:
         - name: POSTGRES_PASSWORD
           valueFrom:
