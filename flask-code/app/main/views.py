@@ -1,9 +1,10 @@
-from flask import render_template, request, session, flash
+from flask import render_template, request, session, flash, send_from_directory
 from app import app
 from git import Repo
 import os, shutil
 import fileinput
 from distutils.dir_util import copy_tree
+from werkzeug.utils import secure_filename
 
 @app.route('/')
 def home():
@@ -24,6 +25,10 @@ def list_images():
     except PermissionError:
         return render_template('images.html', images=[], error="Permission denied when accessing image directory")
 
+@app.route('/images/<filename>')
+def serve_image(filename):
+    """Serve an image from the image directory."""
+    return send_from_directory('/pv/images', secure_filename(filename))
 
 @app.route('/object_browser')
 def object_browser():
