@@ -6,7 +6,7 @@ metadata:
 spec:
     accessModes:
         - ReadWriteOnce
-    storageClassName: mlceph-kubepv
+    storageClassName: nwceph-kubepv
     resources:
         requests:
             storage: 2Gi
