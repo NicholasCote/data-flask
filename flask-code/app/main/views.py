@@ -28,7 +28,7 @@ def list_images():
 @app.route('/images/<filename>')
 def serve_image(filename):
     """Serve an image from the image directory."""
-    return send_from_directory('/pv/images', secure_filename(filename))
+    return send_from_directory('/pv/images/', secure_filename(filename))
 
 @app.route('/object_browser')
 def object_browser():
