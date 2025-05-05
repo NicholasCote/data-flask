@@ -24,12 +24,6 @@ spec:
             server: {{ .Values.webapp.volume1.server }}
             path: {{ .Values.webapp.volume1.path }}
             readOnly: {{ .Values.webapp.volume1.ro }}
-        - name: image-storage
-          persistentVolumeClaim:
-            claimName: ncote-test-app-pv
-        - name: notes-storage
-          persistentVolumeClaim:
-            claimName: ncote-test-app-fs-pv
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
@@ -42,7 +36,3 @@ spec:
         volumeMounts:
         - mountPath: /glade/campaign
           name: {{ .Values.webapp.volume1.name }}        
-        - name: image-storage
-          mountPath: /pv/images  
-        - name: notes-storage
-          mountPath: /pv/notes

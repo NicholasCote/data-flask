@@ -19,6 +19,16 @@ spec:
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.webapp.name }}-esos
+              key: {{ .Values.db.passwordKey }}
+        - name: DB_HOST
+          value: {{ .Values.db.host }}.{{ .Release.Namespace }}.svc.cluster.local
+        - name: DB_NAME
+          value: {{ .Values.db.name }}
         resources:
           limits:
             memory: {{ .Values.webapp.container.memory }}
