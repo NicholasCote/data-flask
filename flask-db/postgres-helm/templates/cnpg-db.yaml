@@ -1,0 +1,9 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.webapp.name }}-pgdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  instance: 3
+  storage:
+    size: 1Gi
