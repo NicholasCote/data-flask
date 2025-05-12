@@ -5,7 +5,7 @@ webapp:
   group: ncote-test-app
   path: /
   tls:
-    fqdn: ncote-test.k8s.ucar.edu
+    fqdn: ncote-test.ncote.k8s.ucar.edu
     secretName: incommon-account-key
   volume1:
     name: campaign
