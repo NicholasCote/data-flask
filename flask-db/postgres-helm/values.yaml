@@ -15,9 +15,13 @@ webapp:
 db:
   host: flask-db-demo
   name: notesdb
-  usernameKey: user
-  passwordKey: pass
-  secretPath: ncote/flask-db-demo
+  usernameKey: username
+  passwordKey: password
+  secretPath: flask-db-demo
+  superuser: 
+    usernameKey: suname
+    passwordKey: supass
+    secretPath: flask-db-demo
   volume:
     name: flask-db-demo-pv
     size: 1Gi

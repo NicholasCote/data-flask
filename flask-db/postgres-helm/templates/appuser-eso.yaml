@@ -1,0 +1,22 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: {{ .Values.webapp.name }}-app-user-esos
+  namespace: {{ .Release.Namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: user-ro
+    kind: SecretStore
+  target:
+    name: {{ .Values.webapp.name }}-app-user
+    type: kubernetes.io/basic-auth
+  data:
+    - secretKey: username
+      remoteRef:
+        key: {{ .Values.db.secretPath }}
+        property: {{ .Values.db.usernameKey }}
+    - secretKey: password
+      remoteRef:
+        key: {{ .Values.db.secretPath }}
+        property: {{ .Values.db.passwordKey }}

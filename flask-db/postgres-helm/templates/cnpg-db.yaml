@@ -7,3 +7,13 @@ spec:
   instances: 3
   storage:
     size: 1Gi
+    
+  bootstrap:
+    initdb:
+      database: {{ .Values.db.database | default "app" }}
+      owner: {{ .Values.db.owner | default "app" }}
+      secret:
+        name: {{ .Values.webapp.name }}-app-user
+        
+  superuserSecret:
+    name: {{ .Values.webapp.name }}-superuser
