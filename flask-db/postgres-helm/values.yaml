@@ -14,7 +14,7 @@ webapp:
     cpu: 2
 db:
   host: flask-db-demo
-  name: notesdb
+  name: ncotesdb
   usernameKey: username
   passwordKey: password
   secretPath: flask-db-demo
