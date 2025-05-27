@@ -10,7 +10,6 @@ spec:
     kind: SecretStore
   target:
     name: {{ .Values.webapp.name }}-app-user
-    type: kubernetes.io/basic-auth
   data:
     - secretKey: username
       remoteRef:
