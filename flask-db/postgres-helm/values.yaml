@@ -14,6 +14,8 @@ webapp:
     cpu: 2
 db:
   host: flask-db-demo
+  owner: ncote
+  database: test-db
   name: ncotesdb
   usernameKey: username
   passwordKey: password

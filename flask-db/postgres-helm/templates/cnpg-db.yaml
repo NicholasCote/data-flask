@@ -10,8 +10,8 @@ spec:
     
   bootstrap:
     initdb:
-      database: {{ .Values.db.database | default "app" }}
-      owner: {{ .Values.db.owner | default "app" }}
+      database: {{ .Values.db.database }}
+      owner: {{ .Values.db.owner }}
       secret:
         name: {{ .Values.webapp.name }}-app-user
         
