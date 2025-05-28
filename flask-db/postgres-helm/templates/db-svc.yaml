@@ -13,4 +13,4 @@ spec:
   ports:
   - port: 5432
     targetPort: 5432
-    nodePort: {{ .Values.db.nodePort | default 30432 }}
+    nodePort: {{ .Values.db.nodePort | default 31432 }}
