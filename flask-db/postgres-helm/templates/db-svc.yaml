@@ -11,6 +11,6 @@ spec:
     cnpg.io/cluster: {{ .Values.db.name }}
     cnpg.io/instanceRole: primary
   ports:
-  - name: postgres
-    port: 5432
+  - port: 5432
     targetPort: 5432
+    nodePort: {{ .Values.db.nodePort | default 30432 }}
