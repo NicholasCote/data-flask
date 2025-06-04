@@ -10,6 +10,7 @@ spec:
 
   postgresql:
     parameters:
+      listen_addresses: "*"
       max_connections: "200"
     pg_hba:
       - "host all all 0.0.0.0/0 md5"
