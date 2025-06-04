@@ -12,7 +12,6 @@ spec:
   type: LoadBalancer
   selector:
     cnpg.io/cluster: {{ .Values.webapp.name }}-pgdb
-    cnpg.io/instanceRole: primary
   ports:
   - port: 5432
     targetPort: 5432
