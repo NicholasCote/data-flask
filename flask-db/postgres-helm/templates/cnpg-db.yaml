@@ -7,7 +7,14 @@ spec:
   instances: 2
   storage:
     size: 1Gi
-    
+
+  postgresql:
+    parameters:
+      listen_addresses: "*"
+      max_connections: "200"
+    pg_hba:
+      - "host all all 0.0.0.0/0 md5"
+
   bootstrap:
     initdb:
       database: {{ .Values.db.database }}
