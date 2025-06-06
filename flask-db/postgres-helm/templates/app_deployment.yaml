@@ -16,6 +16,10 @@ spec:
       labels:
         app: {{ .Values.webapp.name }}
     spec:
+      volumes:
+        - name: {{ .Values.webapp.name }}-pvctest
+          persistentVolumeClaim:
+            claimName: {{ .Values.webapp.name }}-pvctest
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
@@ -25,3 +29,6 @@ spec:
             cpu: {{ .Values.webapp.container.cpu }}
         ports:
         - containerPort: {{ .Values.webapp.container.port }}
+        volumeMounts:
+        - mountPath: /pvc
+          name: {{ .Values.webapp.name }}-pvctest
