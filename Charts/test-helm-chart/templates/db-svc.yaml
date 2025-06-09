@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.webapp.name }}-db-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    cirrus/lb: internal
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "{{ .Values.webapp.name }}-db.k8s.ucar.edu"
+    external-dns.alpha.kubernetes.io/ttl: "300"
+spec:
+  type: LoadBalancer
+  selector:
+    cnpg.io/cluster: {{ .Values.webapp.name }}-pgdb
+    cnpg.io/instanceRole: primary
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP

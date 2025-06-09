@@ -17,3 +17,8 @@ webapp:
     port: 5000
     memory: 4G
     cpu: 2
+db:
+  superuser: 
+    usernameKey: suname
+    passwordKey: supass
+    secretPath: flask-db-demo
