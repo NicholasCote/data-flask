@@ -8,7 +8,7 @@ webapp:
     fqdn: ncote-db-test.k8s.ucar.edu
     secretName: incommon-cert-ncote-db-test
   container: 
-    image: hub.k8s.ucar.edu/ncote/flask-db-demo:v1
+    image: docker.io/ncote/flask-db-demo:v1
     port: 5000
     memory: 1G
     cpu: 2
