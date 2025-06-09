@@ -9,7 +9,7 @@ spec:
     name: user-ro
     kind: SecretStore
   target:
-    name: {{ .Values.webapp.name }}-superuser
+    name: {{ .Values.webapp.name }}-superuser-source
     template:
       type: kubernetes.io/basic-auth
   data:
