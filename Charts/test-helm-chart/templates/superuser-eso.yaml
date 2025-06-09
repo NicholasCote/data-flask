@@ -1,7 +1,7 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: {{ .Values.webapp.name }}-superuser
+  name: {{ .Values.webapp.name }}-superuser-esos
   namespace: {{ .Release.Namespace }}
 spec:
   refreshInterval: 1h
@@ -10,6 +10,8 @@ spec:
     kind: SecretStore
   target:
     name: {{ .Values.webapp.name }}-superuser
+    template:
+      type: kubernetes.io/basic-auth
   data:
     - secretKey: username
       remoteRef:
