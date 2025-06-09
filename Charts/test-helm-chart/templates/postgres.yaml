@@ -18,3 +18,11 @@ spec:
         
   superuserSecret:
     name: {{ .Values.webapp.name }}-superuser
+
+      # Create a standard application user as well
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: {{ .Values.webapp.name }}-app-user
