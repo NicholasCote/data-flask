@@ -1,26 +1,10 @@
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
+# Secret for postgres superuser
+apiVersion: v1
+kind: Secret
 metadata:
-  name: {{ .Values.webapp.name }}-superuser-esos
+  name: "{{ .Values.db.name }}-superuser"
   namespace: {{ .Release.Namespace }}
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: user-ro
-    kind: SecretStore
-  target:
-    name: {{ .Values.webapp.name }}-superuser
-    template:
-      type: kubernetes.io/basic-auth
-      data:
-        username: "{{ `{{ .username }}` }}"
-        password: "{{ `{{ .password }}` }}"
-  data:
-    - secretKey: username
-      remoteRef:
-        key: {{ .Values.db.superuser.secretPath }}
-        property: {{ .Values.db.superuser.usernameKey }}
-    - secretKey: password
-      remoteRef:
-        key: {{ .Values.db.superuser.secretPath }}
-        property: {{ .Values.db.superuser.passwordKey }}
+type: Opaque
+stringData:
+  username: postgres
+  password: "{{ .Values.db.superuserPassword | default "postgres123" }}"
