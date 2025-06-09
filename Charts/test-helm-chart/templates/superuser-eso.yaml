@@ -9,9 +9,12 @@ spec:
     name: user-ro
     kind: SecretStore
   target:
-    name: {{ .Values.webapp.name }}-superuser-source
+    name: {{ .Values.webapp.name }}-superuser
     template:
       type: kubernetes.io/basic-auth
+      data:
+        username: "{{ `{{ .username }}` }}"
+        password: "{{ `{{ .password }}` }}"
   data:
     - secretKey: username
       remoteRef:
