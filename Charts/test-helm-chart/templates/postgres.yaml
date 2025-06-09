@@ -23,6 +23,6 @@ spec:
   bootstrap:
     initdb:
       database: app
-      owner: {{ .Values.db.app.owner }}
+      owner: {{ .Values.db.owner.name }}
       secret:
         name: {{ .Values.webapp.name }}-app-user
