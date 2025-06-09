@@ -32,3 +32,18 @@ spec:
         volumeMounts:
         - mountPath: /pvc
           name: {{ .Values.webapp.name }}-pvctest
+        env:
+        - name: DB_HOST
+          value: {{ .Values.webapp.name }}-pgdb-rw
+        - name: DB_NAME
+          value: {{ .Values.db.database }}
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.webapp.name }}-app-user
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.webapp.name }}-app-user
+              key: password
