@@ -4,6 +4,7 @@ metadata:
   name: {{ .Values.webapp.name }}-pgdb
   namespace: {{ .Release.Namespace }}
 spec:
+  enableSuperuserAccess: true
   instances: 2
   storage:
     size: 1Gi
