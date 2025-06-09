@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: "{{ .Values.db.name }}-superuser"
+  name: {{ .Values.webapp.name }}-superuser
   namespace: {{ .Release.Namespace }}
 type: Opaque
 stringData:
