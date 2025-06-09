@@ -23,6 +23,7 @@ db:
     passwordKey: supass
     secretPath: flask-db-demo
   owner:
-    name: app 
+    name: ncote 
+    usernameKey: username
     passwordKey: password
     secretPath: flask-db-demo
