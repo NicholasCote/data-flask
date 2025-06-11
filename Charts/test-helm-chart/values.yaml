@@ -21,9 +21,9 @@ db:
   superuser: 
     usernameKey: suname
     passwordKey: supass
-    secretPath: flask-db-demo
+    secretPath: ncote@ucar.edu/flask-db-demo
   owner:
     name: ncote 
     usernameKey: username
     passwordKey: password
-    secretPath: flask-db-demo
+    secretPath: ncote@ucar.edu/flask-db-demo

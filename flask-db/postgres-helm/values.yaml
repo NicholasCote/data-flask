@@ -19,11 +19,11 @@ db:
   name: ncotesdb
   usernameKey: username
   passwordKey: password
-  secretPath: flask-db-demo
+  secretPath: ncote@ucar.edu/flask-db-demo
   superuser: 
     usernameKey: suname
     passwordKey: supass
-    secretPath: flask-db-demo
+    secretPath: ncote@ucar.edu/flask-db-demo
   volume:
     name: flask-db-demo-pv
     size: 1Gi
