@@ -13,8 +13,8 @@ webapp:
     path: /gpfs/csfs1
     readOnly: true
   container: 
-    image: docker.io/ncote/data-flask:2025-06-09
-    port: 5000
+    image: docker.io/dattore/rda-web-test:v10
+    port: 8080
     memory: 4G
     cpu: 2
 db:
