@@ -16,6 +16,8 @@ spec:
       labels:
         app: {{ .Values.webapp.name }}
     spec:
+      strategy:
+        type: Recreate
       volumes:
         - name: {{ .Values.webapp.name }}-pvctest
           persistentVolumeClaim:
