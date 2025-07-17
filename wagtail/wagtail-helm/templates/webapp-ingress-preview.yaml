@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.webapp.name }}-prod
+  name: {{ .Values.webapp.name }}-preview
   namespace: {{ .Release.Namespace }}
   labels:
     app: {{ .Values.webapp.name }}
@@ -12,17 +12,17 @@ spec:
   ingressClassName: nginx-internal
   tls:
     - hosts:
-      - {{ .Values.webapp.fqdn }}
-      secretName: ncote-celery-demo-tls
+      - {{ .Values.webapp.name }}-preview.k8s.ucar.edu
+      secretName: ncote-celery-demo-preview-tls
   rules:
-  - host: {{ .Values.webapp.fqdn }}  # ncote-celery-demo.k8s.ucar.edu
+  - host: {{ .Values.webapp.name }}-preview.k8s.ucar.edu  # ncote-celery-demo-preview.k8s.ucar.edu
     http:
       paths:
       - path: {{ .Values.webapp.path }}
         pathType: Prefix
         backend:
           service:
-            name: {{ .Values.webapp.name }}-active
+            name: {{ .Values.webapp.name }}-preview
             port:
               number: {{ .Values.webapp.container.port }}
       - path: /flower
