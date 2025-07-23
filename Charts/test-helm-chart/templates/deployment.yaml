@@ -8,7 +8,6 @@ metadata:
     group: {{ .Values.webapp.group }}
 spec:
   strategy:
-    type: Recreate
     blueGreen:
       activeService: {{ .Values.webapp.name }}-active
       previewService: {{ .Values.webapp.name }}-preview
