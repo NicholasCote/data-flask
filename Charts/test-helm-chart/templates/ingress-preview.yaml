@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.webapp.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    group: {{ .Values.webapp.group }}
+  annotations:
+    cert-manager.io/cluster-issuer: "incommon"
+spec:
+  ingressClassName: nginx-internal
+  tls:
+    - hosts:
+      - {{ .Values.webapp.name }}-preview.k8s.ucar.edu
+      secretName: {{ .Values.webapp.tls.secretName }}
+  rules:
+  - host: {{ .Values.webapp.name }}-preview.k8s.ucar.edu
+    http:
+      paths:
+      - path: {{ .Values.webapp.path }}
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.webapp.name }}
+            port:
+              number: {{ .Values.webapp.container.port }}

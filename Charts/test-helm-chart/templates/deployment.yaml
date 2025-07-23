@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: Rollout
 metadata:
   name: {{ .Values.webapp.name }}
   namespace: {{ .Release.Namespace }}
@@ -9,6 +9,14 @@ metadata:
 spec:
   strategy:
     type: Recreate
+    blueGreen:
+      activeService: {{ .Values.webapp.name }}-active
+      previewService: {{ .Values.webapp.name }}-preview
+      autoPromotionEnabled: false  # Manual promotion for testing
+      scaleDownDelaySeconds: 30
+      prePromotionAnalysis:
+        templates: []
+        args: []
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
