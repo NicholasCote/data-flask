@@ -3,8 +3,11 @@ kind: Cluster
 metadata:
   name: {{ .Values.webapp.name }}-pgdb
   namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.webapp.name }}
+    group: {{ .Values.webapp.group }}
 spec:
-  instances: 3
+  instances: 1
   storage:
     size: 1Gi
     storageClass: ceph-kubepv
@@ -13,6 +16,9 @@ spec:
     pg_hba:
       - "host all all 0.0.0.0/0 md5"
 
+  # Enable superuser access
+  enableSuperuserAccess: true
+  
   bootstrap:
     initdb:
       database: {{ .Values.db.database }}
