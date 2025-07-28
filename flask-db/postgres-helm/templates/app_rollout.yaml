@@ -1,5 +1,5 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ .Values.webapp.name }}
   namespace: {{ .Release.Namespace }}
@@ -9,7 +9,14 @@ metadata:
 spec:
   replicas: {{ .Values.replicaCount }}
   strategy:
-    type: Recreate
+    blueGreen:
+      activeService: {{ .Values.webapp.name }}-active
+      previewService: {{ .Values.webapp.name }}-preview
+      autoPromotionEnabled: false  # Manual promotion for testing
+      scaleDownDelaySeconds: 30
+      prePromotionAnalysis:
+        templates: []
+        args: []
   selector:
     matchLabels:
       app: {{ .Values.webapp.name }}
