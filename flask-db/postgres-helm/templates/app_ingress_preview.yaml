@@ -11,16 +11,16 @@ spec:
   ingressClassName: nginx-internal
   tls:
     - hosts:
-      - {{ .Values.webapp.tls.fqdn }}
-      secretName: {{ .Values.webapp.tls.secretName }}
+      - {{ .Values.webapp.name }}-preview.k8s.ucar.edu
+      secretName: {{ .Values.webapp.name }}-preview-tls
   rules:
-  - host: {{ .Values.webapp.tls.fqdn }}
+  - host: {{ .Values.webapp.name }}-preview.k8s.ucar.edu
     http:
       paths:
       - path: {{ .Values.webapp.path }}
         pathType: Prefix
         backend:
           service:
-            name: {{ .Values.webapp.name }}-active
+            name: {{ .Values.webapp.name }}-preview
             port:
               number: {{ .Values.webapp.container.port }}
