@@ -41,12 +41,12 @@ data:
           <Host name="localhost" appBase="webapps"
                 unpackWARs="true" autoDeploy="true">
             
-            <!-- Access log valve that will now show real client IPs -->
+            <!-- Access log valve that writes to stdout -->
             <Valve className="org.apache.catalina.valves.AccessLogValve" 
-                   directory="logs"
-                   prefix="localhost_access_log" 
-                   suffix=".txt"
-                   pattern="%h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{X-Forwarded-For}i&quot;" />
+                   directory="/proc/self/fd"
+                   prefix="1"
+                   suffix=""
+                   pattern="THREDDS-ACCESS: %h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{X-Forwarded-For}i&quot;" />
           </Host>
         </Engine>
       </Service>
