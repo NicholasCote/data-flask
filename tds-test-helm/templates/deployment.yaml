@@ -52,4 +52,4 @@ spec:
             done
         volumeMounts:
         - name: shared-tmp
-            mountPath: /tmp
+          mountPath: /tmp
