@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.webapp.name }}-tomcat-config
+  namespace: {{ .Release.Namespace }}
+data:
+  server.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Server port="8005" shutdown="SHUTDOWN">
+      <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+      <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+      <GlobalNamingResources>
+        <Resource name="UserDatabase" auth="Container"
+                  type="org.apache.catalina.UserDatabase"
+                  description="User database that can be updated and saved"
+                  factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                  pathname="conf/tomcat-users.xml" />
+      </GlobalNamingResources>
+
+      <Service name="Catalina">
+        <Connector port="8080" protocol="HTTP/1.1"
+                   connectionTimeout="20000"
+                   redirectPort="8443" />
+
+        <Engine name="Catalina" defaultHost="localhost">
+          <!-- RemoteIpValve to handle X-Forwarded-For headers from nginx -->
+          <Valve className="org.apache.catalina.valves.RemoteIpValve"
+                 remoteIpHeader="X-Forwarded-For"
+                 protocolHeader="X-Forwarded-Proto"
+                 trustedProxies="10\..*|192\.168\..*|172\.1[6-9]\..*|172\.2[0-9]\..*|172\.3[0-1]\..*" />
+
+          <Realm className="org.apache.catalina.realm.LockOutRealm">
+            <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+                   resourceName="UserDatabase"/>
+          </Realm>
+
+          <Host name="localhost" appBase="webapps"
+                unpackWARs="true" autoDeploy="true">
+            
+            <!-- Access log valve that will now show real client IPs -->
+            <Valve className="org.apache.catalina.valves.AccessLogValve" 
+                   directory="logs"
+                   prefix="localhost_access_log" 
+                   suffix=".txt"
+                   pattern="%h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{X-Forwarded-For}i&quot;" />
+          </Host>
+        </Engine>
+      </Service>
+    </Server>

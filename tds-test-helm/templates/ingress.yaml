@@ -7,6 +7,8 @@ metadata:
     group: {{ .Values.webapp.group }}
   annotations:
     cert-manager.io/cluster-issuer: "incommon"
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    nginx.ingress.kubernetes.io/enable-real-ip: "true"
 spec:
   ingressClassName: nginx-internal
   tls:
