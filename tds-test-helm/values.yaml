@@ -1,0 +1,14 @@
+replicaCount: 1
+
+webapp:
+  name: tds-test
+  group: tds-test
+  path: /
+  tls:
+    fqdn: tds-test.k8s.ucar.edu
+    secretName: incommon-cert-tds-test
+  container: 
+    image: docker.io/potatofever/rda-tds:sha-4851539
+    port: 8080
+    memory: 12G
+    cpu: 5
