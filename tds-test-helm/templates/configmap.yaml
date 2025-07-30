@@ -6,13 +6,35 @@ metadata:
 data:
   server.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
+    <!-- 
+    Main Tomcat Server Configuration
+    This is the root element that represents the entire Tomcat server instance
+    port="8005" is for shutdown commands, shutdown="SHUTDOWN" is the command string
+    -->
     <Server port="8005" shutdown="SHUTDOWN">
+      
+      <!-- 
+      LISTENERS: These handle server lifecycle events and initialization
+      -->
+      <!-- Logs Tomcat/Java version info at startup -->
       <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      
+      <!-- Manages Apache Portable Runtime (APR) library for better performance -->
       <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+      
+      <!-- Prevents memory leaks from JRE bugs -->
       <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      
+      <!-- Manages lifecycle of global JNDI resources -->
       <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      
+      <!-- Prevents memory leaks from ThreadLocal variables -->
       <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
 
+      <!-- 
+      GLOBAL NAMING RESOURCES: Defines resources available to all web applications
+      This creates a user database for authentication (though THREDDS may not use it)
+      -->
       <GlobalNamingResources>
         <Resource name="UserDatabase" auth="Container"
                   type="org.apache.catalina.UserDatabase"
@@ -21,31 +43,97 @@ data:
                   pathname="conf/tomcat-users.xml" />
       </GlobalNamingResources>
 
+      <!-- 
+      SERVICE: Groups connectors with an engine
+      A service receives requests from connectors and processes them through the engine
+      -->
       <Service name="Catalina">
+        
+        <!-- 
+        CONNECTOR: Handles incoming requests
+        port="8080" - The port your THREDDS container listens on
+        protocol="HTTP/1.1" - HTTP protocol version
+        connectionTimeout="20000" - 20 second timeout for connections
+        redirectPort="8443" - Where to redirect HTTPS requests (not used in K8s typically)
+        -->
         <Connector port="8080" protocol="HTTP/1.1"
                    connectionTimeout="20000"
                    redirectPort="8443" />
 
+        <!-- 
+        ENGINE: Processes requests for a specific service
+        name="Catalina" - Engine name
+        defaultHost="localhost" - Default virtual host for requests
+        -->
         <Engine name="Catalina" defaultHost="localhost">
-          <!-- RemoteIpValve to handle X-Forwarded-For headers from nginx -->
+          
+          <!-- 
+          REMOTE IP VALVE: ***THIS IS THE KEY COMPONENT FOR YOUR USE CASE***
+          This valve processes X-Forwarded-For headers from reverse proxies (nginx ingress)
+          and makes Tomcat treat the original client IP as the "remote address"
+          
+          remoteIpHeader="X-Forwarded-For" - Header containing real client IP
+          protocolHeader="X-Forwarded-Proto" - Header containing original protocol (http/https)
+          trustedProxies - CIDR ranges of proxies we trust to send accurate headers
+                          This includes common Kubernetes cluster network ranges
+          
+          After this valve processes the request:
+          - %h in access logs will show the real client IP instead of nginx pod IP
+          - request.getRemoteAddr() in THREDDS will return the real client IP
+          -->
           <Valve className="org.apache.catalina.valves.RemoteIpValve"
                  remoteIpHeader="X-Forwarded-For"
                  protocolHeader="X-Forwarded-Proto"
                  trustedProxies="10\..*|192\.168\..*|172\.1[6-9]\..*|172\.2[0-9]\..*|172\.3[0-1]\..*" />
 
+          <!-- 
+          REALM: Handles authentication and authorization
+          LockOutRealm prevents brute force attacks by locking accounts
+          UserDatabaseRealm uses the UserDatabase defined above
+          THREDDS typically handles its own auth, so this may not be actively used
+          -->
           <Realm className="org.apache.catalina.realm.LockOutRealm">
             <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
                    resourceName="UserDatabase"/>
           </Realm>
 
+          <!-- 
+          HOST: Virtual host definition
+          name="localhost" - Host name (matches defaultHost above)
+          appBase="webapps" - Directory where web applications are deployed
+          unpackWARs="true" - Automatically extract WAR files
+          autoDeploy="true" - Automatically deploy new applications
+          -->
           <Host name="localhost" appBase="webapps"
                 unpackWARs="true" autoDeploy="true">
             
-            <!-- Access log valve that writes to stdout -->
+            <!-- 
+            ACCESS LOG VALVE: ***THIS CREATES YOUR ACCESS LOGS***
+            CORRECTED VERSION: Uses a temp directory and symbolic link approach
+            
+            directory="/tmp" - Write to /tmp directory first
+            prefix="stdout" - Prefix for the log file
+            suffix=".log" - File extension
+            rotatable="false" - Don't rotate the log file (we'll handle this differently)
+            
+            PATTERN EXPLANATION:
+            - THREDDS-ACCESS: - Custom prefix to identify these logs in kubectl logs
+            - %h - Remote host IP (will be real client IP thanks to RemoteIpValve)
+            - %l - Remote logical username (usually "-")  
+            - %u - Remote user if authenticated (usually "-")
+            - %t - Timestamp in [dd/MMM/yyyy:HH:mm:ss +-timezone] format
+            - %r - First line of HTTP request (method, URL, protocol)
+            - %s - HTTP status code (200, 404, 500, etc.)
+            - %b - Bytes sent in response (excluding headers)
+            - %{Referer}i - HTTP Referer header value
+            - %{User-Agent}i - HTTP User-Agent header value  
+            - %{X-Forwarded-For}i - Original X-Forwarded-For header (for debugging)
+            -->
             <Valve className="org.apache.catalina.valves.AccessLogValve" 
-                   directory="/proc/self/fd"
-                   prefix="1"
-                   suffix=""
+                   directory="/tmp"
+                   prefix="stdout"
+                   suffix=".log"
+                   rotatable="false"
                    pattern="THREDDS-ACCESS: %h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{X-Forwarded-For}i&quot;" />
           </Host>
         </Engine>
