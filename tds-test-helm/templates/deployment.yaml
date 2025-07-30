@@ -20,6 +20,8 @@ spec:
       - name: tomcat-config
         configMap:
           name: {{ .Values.webapp.name }}-tomcat-config
+      - name: shared-tmp
+        emptyDir: {}
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
@@ -33,3 +35,21 @@ spec:
         - name: tomcat-config
           mountPath: /usr/local/tomcat/conf/server.xml
           subPath: server.xml
+        - name: shared-tmp
+          mountPath: /tmp
+      - name: log-tailer
+        image: busybox
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+            while true; do
+            if [ -f /tmp/stdout.log ]; then
+                tail -F /tmp/stdout.log
+            else
+                sleep 1
+            fi
+            done
+        volumeMounts:
+        - name: shared-tmp
+            mountPath: /tmp
