@@ -11,7 +11,7 @@ metadata:
     nginx.ingress.kubernetes.io/enable-real-ip: "true"
     nginx.ingress.kubernetes.io/proxy-real-ip-cidr: "0.0.0.0/0"
 spec:
-  ingressClassName: nginx-internal
+  ingressClassName: nginx-external
   tls:
     - hosts:
       - {{ .Values.webapp.tls.fqdn }}
