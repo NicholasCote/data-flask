@@ -82,7 +82,7 @@ data:
           - request.getRemoteAddr() in THREDDS will return the real client IP
           -->
           <Valve className="org.apache.catalina.valves.RemoteIpValve"
-                 remoteIpHeader="X-Forwarded-For"
+                 remoteIpHeader="X-Real-IP"
                  protocolHeader="X-Forwarded-Proto"
                  trustedProxies="10\..*|192\.168\..*|172\.1[6-9]\..*|172\.2[0-9]\..*|172\.3[0-1]\..*" />
 
@@ -134,7 +134,7 @@ data:
                    prefix="stdout"
                    suffix=".log"
                    rotatable="false"
-                   pattern="THREDDS-ACCESS: %h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{X-Forwarded-For}i&quot;" />
+                   pattern="THREDDS-ACCESS: %h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; XFF=&quot;%{X-Forwarded-For}i&quot; XRI=&quot;%{X-Real-IP}i&quot; XFP=&quot;%{X-Forwarded-Proto}i&quot; XFH=&quot;%{X-Forwarded-Host}i&quot;" />
           </Host>
         </Engine>
       </Service>
