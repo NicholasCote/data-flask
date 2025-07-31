@@ -11,7 +11,8 @@ spec:
   ingressClassName: nginx-internal
   tls:
     - hosts:
-      - {{ .Values.webapp.tls.fqdn }}
+      - {{ .Values.webapp.tls.fqdn }} 
+      - ncote-test.ucar.edu
       secretName: {{ .Values.webapp.tls.secretName }}
   rules:
   - host: {{ .Values.webapp.tls.fqdn }}
