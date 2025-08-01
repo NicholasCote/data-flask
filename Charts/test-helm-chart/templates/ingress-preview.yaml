@@ -12,7 +12,7 @@ spec:
   tls:
     - hosts:
       - {{ .Values.webapp.name }}-preview.k8s.ucar.edu
-      secretName: {{ .Values.webapp.tls.secretName }}
+      secretName: {{ .Values.webapp.name }}-preview-tls
   rules:
   - host: {{ .Values.webapp.name }}-preview.k8s.ucar.edu
     http:

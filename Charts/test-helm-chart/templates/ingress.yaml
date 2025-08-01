@@ -13,7 +13,7 @@ spec:
     - hosts:
       - {{ .Values.webapp.tls.fqdn }} 
       - ncote-test.ucar.edu
-      secretName: {{ .Values.webapp.tls.secretName }}
+      secretName: {{ .Values.webapp.name }}-tls
   rules:
   - host: {{ .Values.webapp.tls.fqdn }}
     http:
