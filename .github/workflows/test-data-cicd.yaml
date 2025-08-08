@@ -15,7 +15,7 @@ env:
   GITHUB_BRANCH: ${{ github.ref_name }}
 
 jobs:
-  podman-build-push:
+  image-build-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo 
@@ -31,11 +31,11 @@ jobs:
           registry: hub.k8s.ucar.edu
           username: robot$ncote+dataflask
           password: ${{ secrets.HARBOR_ROBOT_PW  }}
-      - name: Build Podman image
+      - name: Build Container image
         run: |
-          docker buildx build -t hub.k8s.ucar.edu/ncote/data-flask:${{ steps.date.outputs.date }} .
-      - name: Push Podman image to Docker hub
-        run: docker push hub.k8s.ucar.edu/ncote/data-flask:${{ steps.date.outputs.date }}
+          docker buildx build -t hub.k8s.ucar.edu/ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }} .
+      - name: Push Container image to Docker hub
+        run: docker push hub.k8s.ucar.edu/ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}
       - name: Update Helm values.yaml
         run: |
           sed -i "/data-flask/ c\    image: hub.k8s.ucar.edu/ncote/data-flask-${{ env.GITHUB_BRANCH }}:${{ steps.date.outputs.date }}" Charts/test-helm-chart/values.yaml
