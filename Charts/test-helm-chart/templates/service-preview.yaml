@@ -8,5 +8,3 @@ metadata:
 spec:
   ports:
   - port: {{ .Values.webapp.container.port }}
-  selector:
-    app: {{ .Values.webapp.name }}
