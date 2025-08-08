@@ -13,9 +13,6 @@ spec:
       previewService: {{ .Values.webapp.name }}-preview
       autoPromotionEnabled: false  # Manual promotion for testing
       scaleDownDelaySeconds: 30
-      prePromotionAnalysis:
-        templates: []
-        args: []
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
