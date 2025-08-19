@@ -25,7 +25,7 @@ spec:
             name: {{ .Values.webapp.name }}-active
             port:
               number: {{ .Values.webapp.container.port }}
-  - host: ncote-test.ucar.edu  # Add this rule
+  - host: ncote-test.ucar.edu
     http:
       paths:
       - path: {{ .Values.webapp.path }}
