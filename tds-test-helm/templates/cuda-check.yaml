@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cuda-driver-check
+  labels:
+    app: cuda-driver-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cuda-driver-check
+  template:
+    metadata:
+      labels:
+        app: cuda-driver-check
+    spec:
+      # Use NVIDIA container runtime
+      runtimeClassName: nvidia
+      containers:
+      - name: nvidia-smi-check
+        # Use NVIDIA's CUDA runtime image which has nvidia-smi
+        image: nvidia/cuda:12.0-runtime-ubuntu20.04
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - |
+            echo "=== CUDA Driver Version Check ==="
+            echo "Node: $(hostname)"
+            echo "Timestamp: $(date)"
+            echo "GPU Info:"
+            nvidia-smi --query-gpu=name,driver_version,cuda_version --format=csv
+            echo ""
+            echo "Full nvidia-smi output:"
+            nvidia-smi
+            echo "=== Keeping container alive for log collection ==="
+            # Keep the container running so you can collect logs
+            sleep 3600
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+      restartPolicy: Always
