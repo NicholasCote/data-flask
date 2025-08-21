@@ -1,111 +1,43 @@
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: system-verification-job
+  name: cuda-driver-check
+  labels:
+    app: cuda-driver-check
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cuda-driver-check
   template:
+    metadata:
+      labels:
+        app: cuda-driver-check
     spec:
+      # Use NVIDIA container runtime
       runtimeClassName: nvidia
-      hostNetwork: true
-      hostPID: true
       containers:
-      - name: system-check
+      - name: nvidia-smi-check
+        # Use NVIDIA's CUDA runtime image which has nvidia-smi
         image: nvidia/cuda:12.0-runtime-ubuntu20.04
         command: ["/bin/bash"]
         args:
           - -c
           - |
-            echo "=== SYSTEM HARDWARE VERIFICATION ==="
-            echo "Timestamp: $(date)"
+            echo "=== CUDA Driver Version Check ==="
             echo "Node: $(hostname)"
+            echo "Timestamp: $(date)"
+            echo "GPU Info:"
+            nvidia-smi --query-gpu=name,driver_version,cuda_version --format=csv
             echo ""
-            
-            # Install required tools
-            apt-get update -qq && apt-get install -y -qq dmidecode lshw pciutils util-linux procps
-            
-            echo "=== MANUFACTURER & MODEL ==="
-            dmidecode -s system-manufacturer 2>/dev/null | head -1
-            dmidecode -s system-product-name 2>/dev/null | head -1
-            echo ""
-            
-            echo "=== CPU INFORMATION ==="
-            echo "CPU Model: $(dmidecode -s processor-version 2>/dev/null | head -1)"
-            echo "CPU Count: $(dmidecode -t processor 2>/dev/null | grep -c "Socket Designation")"
-            echo "CPU Speed: $(dmidecode -t processor 2>/dev/null | grep "Max Speed" | head -1 | cut -d: -f2 | xargs)"
-            echo "CPU Cores per socket: $(lscpu | grep "Core(s) per socket" | cut -d: -f2 | xargs)"
-            echo "Total CPU cores: $(nproc)"
-            echo "CPU Architecture: $(lscpu | grep Architecture | cut -d: -f2 | xargs)"
-            echo ""
-            
-            echo "=== MEMORY INFORMATION ==="
-            echo "Total RAM: $(free -h | grep Mem | awk '{print $2}')"
-            echo "RAM Details:"
-            dmidecode -t memory 2>/dev/null | grep -E "Size|Speed|Type:" | grep -v "No Module" | head -10
-            echo ""
-            
-            echo "=== GPU INFORMATION ==="
-            nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv
-            echo ""
-            lspci | grep -i nvidia
-            echo ""
-            
-            echo "=== NETWORK INTERFACES ==="
-            echo "Network interfaces (excluding loopback):"
-            ip link show | grep -E "^[0-9]+:" | grep -v lo: | while read line; do
-              iface=$(echo $line | cut -d: -f2 | xargs)
-              speed=$(ethtool $iface 2>/dev/null | grep "Speed:" | cut -d: -f2 | xargs)
-              echo "  $iface: $speed"
-            done
-            echo ""
-            echo "PCI Network devices:"
-            lspci | grep -i ethernet
-            echo ""
-            
-            echo "=== STORAGE INFORMATION ==="
-            echo "NVMe drives:"
-            lsblk -d -o NAME,SIZE,MODEL | grep nvme
-            echo ""
-            echo "All block devices:"
-            lsblk -o NAME,SIZE,TYPE,MODEL,SERIAL
-            echo ""
-            echo "Storage capacity summary:"
-            df -h | grep -E "nvme|sd[a-z]"
-            echo ""
-            
-            echo "=== PCI DEVICES SUMMARY ==="
-            lspci | grep -E "(Ethernet|Network|GPU|NVIDIA)"
-            echo ""
-            
-            echo "=== SYSTEM SUMMARY ==="
-            echo "Hostname: $(hostname)"
-            echo "Kernel: $(uname -r)"
-            echo "OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '"')"
-            echo "Uptime: $(uptime -p)"
-            echo ""
-            
-        securityContext:
-          privileged: true
+            echo "Full nvidia-smi output:"
+            nvidia-smi
+            echo "=== Keeping container alive for log collection ==="
+            # Keep the container running so you can collect logs
+            sleep 3600
         resources:
           limits:
             nvidia.com/gpu: 1
-        volumeMounts:
-        - name: dev
-          mountPath: /dev
-        - name: proc
-          mountPath: /host/proc
-          readOnly: true
-        - name: sys
-          mountPath: /host/sys
-          readOnly: true
-      volumes:
-      - name: dev
-        hostPath:
-          path: /dev
-      - name: proc
-        hostPath:
-          path: /proc
-      - name: sys
-        hostPath:
-          path: /sys
-      restartPolicy: Never
-  backoffLimit: 2
+          requests:
+            nvidia.com/gpu: 1
+      restartPolicy: Always
