@@ -19,6 +19,7 @@ spec:
       labels:
         severity: warning
         team: ncote-test
+        namespace: ncote
       annotations:
         summary: "Test alert - always firing"
         description: "This is a test alert to verify email routing works"
