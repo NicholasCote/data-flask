@@ -14,7 +14,9 @@ spec:
     groupInterval: 1m
     repeatInterval: 5m 
     matchers:
-      - namespace="ncote"
+      - name: namespace
+        value: ncote
+        matchType: "="
 
   receivers:
     - name: ncote-test
