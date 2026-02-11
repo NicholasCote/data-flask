@@ -5,6 +5,7 @@ metadata:
   namespace: ncote
   labels:
     alertmanagerConfig: test
+    namespace: ncote
 spec:
   route:
     receiver: ncote-test
