@@ -6,6 +6,7 @@ metadata:
   labels:
     team: test-team
     release: kube-prometheus-stack
+    severity: warning
 spec:
   groups:
   - name: test

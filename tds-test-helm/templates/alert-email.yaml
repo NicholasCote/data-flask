@@ -12,8 +12,8 @@ spec:
     groupInterval: 1m
     repeatInterval: 5m  # Repeat every 5 min for testing
     matchers:
-      - name: team
-        value: test-team
+      - name: namespace
+        value: ncote
         matchType: "="
 
   receivers:
