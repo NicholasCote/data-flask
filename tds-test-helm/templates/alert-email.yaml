@@ -7,7 +7,7 @@ spec:
   route:
     receiver: my-email
     groupBy:
-      - alertname
+      - namespace
     groupWait: 10s  # Short wait for testing
     groupInterval: 1m
     repeatInterval: 5m  # Repeat every 5 min for testing
