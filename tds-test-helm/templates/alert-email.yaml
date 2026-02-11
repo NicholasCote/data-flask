@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: test-email-routing
+  namespace: ncote
+spec:
+  route:
+    receiver: my-email
+    groupBy:
+      - alertname
+    groupWait: 10s  # Short wait for testing
+    groupInterval: 1m
+    repeatInterval: 5m  # Repeat every 5 min for testing
+    matchers:
+      - name: team
+        value: test-team
+        matchType: "="
+
+  receivers:
+    - name: my-email
+      emailConfigs:
+        - to: ncote@ucar.edu 
+          from: alertmanager@k8s.ucar.edu
+          smarthost: vdir.ucar.edu:25  
+          requireTLS: false

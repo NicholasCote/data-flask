@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: test-alert
+  namespace: ncote
+  labels:
+    team: test-team
+spec:
+  groups:
+  - name: test
+    interval: 30s
+    rules:
+    - alert: TestAlertAlwaysFiring
+      expr: vector(1)  # This always returns 1, so alert always fires
+      for: 1m
+      labels:
+        severity: warning
+        team: test-team
+      annotations:
+        summary: "Test alert - always firing"
+        description: "This is a test alert to verify email routing works"
