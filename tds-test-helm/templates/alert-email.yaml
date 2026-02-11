@@ -20,7 +20,7 @@ spec:
 
   receivers:
     - name: ncote-test
-      email_configs:
+      emailConfigs:
         - to: ncote@ucar.edu 
           from: alertmanager@k8s.ucar.edu
           smarthost: vdir.ucar.edu:25  
