@@ -7,21 +7,18 @@ metadata:
     alertmanagerConfig: test
 spec:
   route:
-    receiver: my-email
+    receiver: ncote-test
     groupBy:
       - namespace
-    groupWait: 10s  # Short wait for testing
+    groupWait: 10s
     groupInterval: 1m
-    repeatInterval: 5m  # Repeat every 5 min for testing
+    repeatInterval: 5m 
     matchers:
-      - name: namespace
-        value: ncote
-        matchType: "="
+      - namespace="ncote"
 
   receivers:
-    - name: my-email
-      emailConfigs:
+    - name: ncote-test
+      email_configs:
         - to: ncote@ucar.edu 
           from: alertmanager@k8s.ucar.edu
           smarthost: vdir.ucar.edu:25  
-          requireTLS: false
