@@ -3,6 +3,8 @@ kind: AlertmanagerConfig
 metadata:
   name: test-email-routing
   namespace: ncote
+  labels:
+    alertmanagerConfig: test
 spec:
   route:
     receiver: my-email
