@@ -10,7 +10,7 @@ spec:
   route:
     receiver: ncote-test
     groupBy:
-      - namespace
+      - alertname
     groupWait: 10s
     groupInterval: 1m
     repeatInterval: 5m 
