@@ -13,7 +13,7 @@ spec:
       - alertname
     groupWait: 10s
     groupInterval: 1m
-    repeatInterval: 5m 
+    repeatInterval: 60m 
     matchers:
       - name: namespace
         value: ncote
