@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ .Values.webapp.name }}-basic-health
+  namespace: {{ .Release.Namespace }}
+spec:
+  metrics:
+    - name: pod-health
+      interval: 20s
+      count: 3
+      successCondition: result == 1
+      provider:
+        prometheus:
+          address: http://prometheus-k8s.monitoring.svc:9090
+          query: |
+            sum(up{namespace="{{ .Release.Namespace }}", 
+                     job="{{ .Values.webapp.name }}-preview"}) 
+            / count(up{namespace="{{ .Release.Namespace }}", 
+                       job="{{ .Values.webapp.name }}-preview"})

@@ -13,10 +13,12 @@ spec:
     blueGreen:
       activeService: {{ .Values.webapp.name }}-active
       previewService: {{ .Values.webapp.name }}-preview
-      autoPromotionEnabled: false  # Manual promotion for testing
+      autoPromotionEnabled: true
+      autoPromotionSeconds: 60
       scaleDownDelaySeconds: 30
       prePromotionAnalysis:
-        templates: []
+        templates: 
+          - templateName: {{ .Values.webapp.name }}-basic-health
         args: []
   selector:
     matchLabels:
