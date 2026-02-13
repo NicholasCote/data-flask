@@ -7,7 +7,9 @@ metadata:
     group: {{ .Values.webapp.group }}
 spec:
   ports:
-  - port: {{ .Values.webapp.container.port }}
+  - name: http
+    port: {{ .Values.webapp.container.port }}
+    targetPort: {{ .Values.webapp.container.port }}
   - name: metrics
     port: 9090
     targetPort: 8000

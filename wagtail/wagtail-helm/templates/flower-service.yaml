@@ -6,7 +6,8 @@ spec:
   selector:
     app: {{ .Values.webapp.name }}-flower
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 5555
       targetPort: 5555
     - name: metrics
