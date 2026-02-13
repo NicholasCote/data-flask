@@ -39,8 +39,6 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.webapp.container.port }}
-        - name: metrics
-          containerPort: 8000
         volumeMounts:
         - mountPath: /glade/campaign
           name: {{ .Values.webapp.volume1.name }}

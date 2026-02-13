@@ -11,7 +11,7 @@ spec:
       app: {{ .Values.webapp.name }}
       component: web
   endpoints:
-    - port: metrics
+    - port: http
       path: /metrics
       interval: 30s
 ---
