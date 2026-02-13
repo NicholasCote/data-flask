@@ -37,7 +37,8 @@ spec:
         image: {{ .Values.webapp.container.image }}
         imagePullPolicy: {{ .Values.webapp.container.imagePullPolicy }}
         ports:
-        - containerPort: {{ .Values.webapp.container.port }}
+        - name: http
+          containerPort: {{ .Values.webapp.container.port }}
         - name: metrics
           containerPort: 8000
         volumeMounts:
