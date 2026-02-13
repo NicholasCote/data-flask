@@ -1,14 +1,14 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ .Values.appName }}-web-metrics
+  name: {{ .Values.webapp.name }}-web-metrics
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ .Values.appName }}
+    app: {{ .Values.webapp.name }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      app: {{ .Values.webapp.name }}
       component: web
   endpoints:
     - port: metrics
@@ -18,14 +18,14 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ .Values.appName }}-worker-metrics
+  name: {{ .Values.webapp.name }}-worker-metrics
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ .Values.appName }}
+    app: {{ .Values.webapp.name }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      app: {{ .Values.webapp.name }}
       component: worker
   endpoints:
     - port: metrics
@@ -35,14 +35,14 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ .Values.appName }}-flower-metrics
+  name: {{ .Values.webapp.name }}-flower-metrics
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ .Values.appName }}
+    app: {{ .Values.webapp.name }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      app: {{ .Values.webapp.name }}
       component: flower
   endpoints:
     - port: metrics
