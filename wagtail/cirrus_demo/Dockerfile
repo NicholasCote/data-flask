@@ -31,7 +31,6 @@ WORKDIR /app
 # Copy the requirements first to leverage Docker cache
 COPY requirements.txt /app/
 RUN pip install -r requirements.txt
-RUN pip install "gunicorn==20.1.0"
 
 # Copy the source code of the project into the container.
 COPY --chown=wagtail:wagtail . /app/
