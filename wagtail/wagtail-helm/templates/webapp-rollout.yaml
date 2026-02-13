@@ -38,6 +38,8 @@ spec:
         imagePullPolicy: {{ .Values.webapp.container.imagePullPolicy }}
         ports:
         - containerPort: {{ .Values.webapp.container.port }}
+        - name: metrics
+          containerPort: 8000
         volumeMounts:
         - mountPath: /glade/campaign
           name: {{ .Values.webapp.volume1.name }}

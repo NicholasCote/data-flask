@@ -9,3 +9,6 @@ spec:
     - protocol: TCP
       port: 5555
       targetPort: 5555
+    - name: metrics
+      port: 9091
+      targetPort: 5555

@@ -7,6 +7,8 @@ RUN useradd wagtail
 # Port used by this container to serve HTTP.
 EXPOSE 8000
 
+EXPOSE 8000 9090 5555
+
 # Set environment variables.
 ENV PYTHONUNBUFFERED=1 \
     PORT=8000 \
@@ -61,6 +63,10 @@ run_web() {
 run_worker() {
     echo "Starting Celery worker..."
     python manage.py migrate --noinput
+    
+    # Start metrics server in background
+    python -c "from cirrus_demo.worker_metrics_server import start_metrics_server; start_metrics_server(9090)" &
+    
     exec celery -A cirrus_demo worker -l info
 }
 

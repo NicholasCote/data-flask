@@ -8,3 +8,6 @@ metadata:
 spec:
   ports:
   - port: {{ .Values.webapp.container.port }}
+  - name: metrics
+    port: 9090
+    targetPort: 8000

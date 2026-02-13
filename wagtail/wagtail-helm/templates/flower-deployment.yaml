@@ -26,3 +26,5 @@ spec:
           - flower
         ports:
           - containerPort: 5555
+          - name: metrics
+            containerPort: 5555

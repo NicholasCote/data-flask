@@ -6,3 +6,5 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cirrus_demo.settings.base')
 app = Celery('cirrus_demo')
 app.config_from_object('cirrus_demo.settings.base', namespace='CELERY')
 app.autodiscover_tasks()
+
+from cirrus_demo import celery_metrics
