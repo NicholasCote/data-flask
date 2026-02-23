@@ -2,15 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.webapp.name }}-flower
+  labels:
+    app: {{ .Values.webapp.name }}-flower
+    component: flower
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: {{ .Values.webapp.name }}-flower
+      component: flower
   template:
     metadata:
       labels:
         app: {{ .Values.webapp.name }}-flower
+        component: flower
     spec:
       containers:
       - name: {{ .Values.webapp.name }}-flower
@@ -26,5 +31,4 @@ spec:
           - flower
         ports:
           - containerPort: 5555
-          - name: metrics
-            containerPort: 5555
+            name: http

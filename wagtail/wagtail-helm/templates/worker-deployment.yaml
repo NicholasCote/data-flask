@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: {{ .Values.webapp.name }}-worker
+        component: worker
     spec:
       volumes:
         - name: {{ .Values.webapp.volume1.name }}

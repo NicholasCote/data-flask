@@ -6,6 +6,7 @@ metadata:
   labels:
     app: {{ .Values.webapp.name }}
     group: {{ .Values.webapp.group }}
+    component: web
 spec:
   replicas: {{ .Values.webapp.replicaCount }}
   revisionHistoryLimit: 2

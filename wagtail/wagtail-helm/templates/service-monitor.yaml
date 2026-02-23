@@ -17,18 +17,18 @@ spec:
       interval: 30s
 ---
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
   name: {{ .Values.webapp.name }}-worker-metrics
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.webapp.name }}
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
       app: {{ .Values.webapp.name }}
       component: worker
-  endpoints:
+  podMetricsEndpoints:
     - port: metrics
       path: /metrics
       interval: 30s
