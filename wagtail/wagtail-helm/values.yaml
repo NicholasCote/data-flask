@@ -17,3 +17,5 @@ webapp:
     size: 2Gi
 worker:
   replicaCount: 2
+alerting:
+  email: ncote@ucar.edu
