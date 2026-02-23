@@ -16,8 +16,8 @@ spec:
           labels:
             severity: info
           annotations:
-            summary: "Celery task started: {{ $labels.task_name }}"
-            description: "{{ $value }} task(s) started in the last 5 minutes."
+            summary: "Celery task started: {{`{{`}} $labels.task_name {{`}}`}}"
+            description: "{{`{{`}} $value {{`}}`}} task(s) started in the last 5 minutes."
 
         - alert: CeleryTaskFailed
           expr: increase(celery_task_failed_total[5m]) > 0
@@ -25,8 +25,8 @@ spec:
           labels:
             severity: warning
           annotations:
-            summary: "Celery task failed: {{ $labels.task_name }}"
-            description: "Exception: {{ $labels.exception }}, {{ $value }} failure(s) in last 5m."
+            summary: "Celery task failed: {{`{{`}} $labels.task_name {{`}}`}}"
+            description: "Exception: {{`{{`}} $labels.exception {{`}}`}}, {{`{{`}} $value {{`}}`}} failure(s) in last 5m."
 
         - alert: CeleryTaskHighDuration
           expr: histogram_quantile(0.95, rate(celery_task_duration_seconds_bucket[5m])) > 30
@@ -34,8 +34,8 @@ spec:
           labels:
             severity: warning
           annotations:
-            summary: "Slow Celery task: {{ $labels.task_name }}"
-            description: "P95 duration is {{ $value }}s (threshold: 30s)."
+            summary: "Slow Celery task: {{`{{`}} $labels.task_name {{`}}`}}"
+            description: "P95 duration is {{`{{`}} $value {{`}}`}}s (threshold: 30s)."
 
         - alert: CeleryNoActiveWorkers
           expr: celery_workers_active == 0
