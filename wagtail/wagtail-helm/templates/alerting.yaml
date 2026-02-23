@@ -1,14 +1,14 @@
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
-  name: {{ .Values.appName }}-alerting
+  name: {{ .Values.webapp.name }}-alerting
   namespace: {{ .Values.namespace }}
   labels:
-    alertmanagerConfig: {{ .Values.appName }}
+    alertmanagerConfig: {{ .Values.webapp.name }}
     namespace: {{ .Values.namespace }}
 spec:
   route:
-    receiver: {{ .Values.appName }}-notifications
+    receiver: {{ .Values.webapp.name }}-notifications
     groupBy:
       - alertname
     groupWait: 10s
@@ -20,7 +20,7 @@ spec:
         matchType: "="
 
   receivers:
-    - name: {{ .Values.appName }}-notifications
+    - name: {{ .Values.webapp.name }}-notifications
       emailConfigs:
         - to: {{ .Values.alerting.email }}
           from: alertmanager@k8s.ucar.edu
