@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
   name: {{ .Values.webapp.name }}-alerting
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     alertmanagerConfig: {{ .Values.webapp.name }}
     namespace: {{ .Values.namespace }}
@@ -16,7 +16,7 @@ spec:
     repeatInterval: 60m 
     matchers:
       - name: namespace
-        value: {{ .Values.namespace }}
+        value: {{ .Release.Namespace }}
         matchType: "="
 
   receivers:
