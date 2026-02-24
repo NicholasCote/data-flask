@@ -39,7 +39,7 @@ metadata:
   name: {{ .Values.webapp.name }}-flower-metrics
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ .Values.webapp.name }}
+    app: {{ .Values.webapp.name }}-flower
 spec:
   selector:
     matchLabels:
