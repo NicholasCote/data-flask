@@ -27,7 +27,7 @@ urlpatterns = [
     path('trigger-weather-analysis/', views.trigger_weather_analysis, name='trigger-weather-analysis'),
     path('trigger-sum-analysis/', views.trigger_sum_analysis, name='trigger_sum_analysis'),
     path('check-task/<str:task_id>/', views.check_task_status, name='check_task_status'),
-    path('metrics/', include('django_prometheus.urls')),
+    path('', include('django_prometheus.urls')),
 ]
 
 
