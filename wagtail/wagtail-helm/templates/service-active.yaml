@@ -5,6 +5,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     group: {{ .Values.webapp.group }}
+    app: {{ .Values.webapp.name }}
+    component: web         
 spec:
   ports:
   - name: http

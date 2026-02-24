@@ -40,10 +40,11 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
     app: {{ .Values.webapp.name }}-flower
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.webapp.name }}
+      app: {{ .Values.webapp.name }}-flower
       component: flower
   endpoints:
     - port: metrics
