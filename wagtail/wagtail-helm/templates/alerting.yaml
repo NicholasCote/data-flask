@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     alertmanagerConfig: {{ .Values.webapp.name }}
-    namespace: {{ .Values.namespace }}
+    namespace: {{ .Release.Namespace }}
 spec:
   route:
     receiver: {{ .Values.webapp.name }}-notifications
