@@ -6,6 +6,9 @@ metadata:
   labels:
     group: {{ .Values.webapp.group }}
 spec:
-  type: NodePort
+  type: ClusterIP
+  selector:
+    app: {{ .Values.webapp.name }}
   ports:
   - port: {{ .Values.webapp.container.port }}
+    targetPort: {{ .Values.webapp.container.port }}

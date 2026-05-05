@@ -12,11 +12,8 @@ spec:
     blueGreen:
       activeService: {{ .Values.webapp.name }}-active
       previewService: {{ .Values.webapp.name }}-preview
-      autoPromotionEnabled: false  # Manual promotion for testing
+      autoPromotionEnabled: false
       scaleDownDelaySeconds: 30
-      prePromotionAnalysis:
-        templates: []
-        args: []
   selector:
     matchLabels:
       app: {{ .Values.webapp.name }}

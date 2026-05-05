@@ -11,10 +11,10 @@ spec:
   ingressClassName: traefik-internal
   tls:
     - hosts:
-      - {{ .Values.webapp.name }}-preview.k8s.ucar.edu
-      secretName: {{ .Values.webapp.name }}-preview-tls
+      - {{ .Values.webapp.preview.tls.fqdn }}
+      secretName: {{ .Values.webapp.preview.tls.secretName }}
   rules:
-  - host: {{ .Values.webapp.name }}-preview.k8s.ucar.edu
+  - host: {{ .Values.webapp.preview.tls.fqdn }}
     http:
       paths:
       - path: {{ .Values.webapp.path }}

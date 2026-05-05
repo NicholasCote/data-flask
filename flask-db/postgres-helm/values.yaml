@@ -7,6 +7,10 @@ webapp:
   tls:
     fqdn: ncote-db-test.k8s.ucar.edu
     secretName: incommon-cert-ncote-db-test
+  preview:
+    tls:
+      fqdn: ncote-db-test-preview.k8s.ucar.edu
+      secretName: ncote-db-test-preview-tls
   container: 
     image: docker.io/ncote/flask-db-demo:v1
     port: 5000
