@@ -1,90 +1,34 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K8s PV Demo &middot; Notes</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>K8s PV Demo: Notes App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        .note { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+        button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        .container { display: flex; flex-direction: column; }
+        .status { padding: 10px; margin-top: 20px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
 </head>
 <body>
-    <header class="site-header">
-        <div class="header-inner">
-            <a href="/" class="brand">
-                <div class="brand-mark">K8s</div>
-                <div class="brand-text">
-                    <span class="brand-title">Kubernetes PV Demo</span>
-                    <span class="brand-subtitle">Notes &middot; Persistent Storage</span>
-                </div>
-            </a>
-            <nav class="site-nav">
-                <a href="/">Home</a>
-                <a href="/notes">API</a>
-                <a href="https://www.cisl.ucar.edu/" target="_blank" rel="noopener">CISL</a>
-            </nav>
-        </div>
-    </header>
-
-    <section class="hero">
-        <div class="hero-inner">
-            <div class="hero-accent"></div>
-            <h1>A simple demo of persistent storage on Kubernetes</h1>
-            <p>Write notes, save them to a PostgreSQL volume, and watch state survive pod restarts. A small Flask app for exploring stateful workloads.</p>
-        </div>
-    </section>
-
-    <main>
-        <div id="status" class="status" role="status" aria-live="polite"></div>
-
-        <section class="section">
-            <h2>Database</h2>
-            <p class="section-lead">Initialize the <code>notes</code> table if it does not yet exist.</p>
-            <div class="button-row">
-                <button id="init-db" class="btn-secondary" type="button">Initialize Database</button>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Create a note</h2>
-            <p class="section-lead">Add an entry to the persistent volume.</p>
-            <div class="form-row">
-                <textarea id="note-content" placeholder="Write something worth remembering&hellip;"></textarea>
-                <div class="button-row">
-                    <button id="create-note" class="btn-primary" type="button">Save Note</button>
-                </div>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Your notes</h2>
-            <p class="section-lead">Newest first.</p>
-            <div id="notes-list" class="notes-grid"></div>
-        </section>
-    </main>
-
-    <footer class="site-footer">
-        <div class="footer-inner">
-            <p>Kubernetes Persistent Volume Demo &middot; Flask + PostgreSQL</p>
-            <p>Styled after <a href="https://www.cisl.ucar.edu/" target="_blank" rel="noopener">CISL @ NCAR</a></p>
-        </div>
-    </footer>
+    <h1>Kubernetes PV Demo: Notes App</h1>
+    <div class="container">
+        <div id="status" class="status"></div>
+        <button id="init-db">Initialize Database</button>
+        <h2>Create a New Note</h2>
+        <textarea id="note-content" placeholder="Enter your note here..."></textarea>
+        <button id="create-note">Save Note</button>
+        <h2>Your Notes</h2>
+        <div id="notes-list"></div>
+    </div>
 
     <script>
-        const statusElement = document.getElementById('status');
-        let statusTimer = null;
-
-        function showStatus(message, type) {
-            statusElement.textContent = message;
-            statusElement.className = 'status ' + type;
-            if (statusTimer) clearTimeout(statusTimer);
-            statusTimer = setTimeout(() => {
-                statusElement.textContent = '';
-                statusElement.className = 'status';
-            }, 5000);
-        }
-
+        // Initialize the database
         document.getElementById('init-db').addEventListener('click', async () => {
             try {
                 const response = await fetch('/init-db');
@@ -96,24 +40,26 @@
             }
         });
 
+        // Create a new note
         document.getElementById('create-note').addEventListener('click', async () => {
-            const contentEl = document.getElementById('note-content');
-            const content = contentEl.value.trim();
+            const content = document.getElementById('note-content').value;
             if (!content) {
                 showStatus('Note content cannot be empty', 'error');
                 return;
             }
-
+            
             try {
                 const response = await fetch('/notes', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify({ content }),
                 });
-
+                
                 if (response.ok) {
-                    contentEl.value = '';
-                    showStatus('Note saved.', 'success');
+                    document.getElementById('note-content').value = '';
+                    showStatus('Note created successfully!', 'success');
                     fetchNotes();
                 } else {
                     const error = await response.json();
@@ -124,28 +70,27 @@
             }
         });
 
+        // Fetch and display notes
         async function fetchNotes() {
-            const notesList = document.getElementById('notes-list');
             try {
                 const response = await fetch('/notes');
                 const notes = await response.json();
-
+                
+                const notesList = document.getElementById('notes-list');
                 notesList.innerHTML = '';
-
+                
                 if (notes.length === 0) {
-                    notesList.innerHTML = '<div class="empty-state">No notes yet. Create one above.</div>';
+                    notesList.innerHTML = '<p>No notes yet. Create one above!</p>';
                     return;
                 }
-
+                
                 notes.forEach(note => {
-                    const noteElement = document.createElement('article');
+                    const noteElement = document.createElement('div');
                     noteElement.className = 'note';
-                    const p = document.createElement('p');
-                    p.textContent = note.content;
-                    const small = document.createElement('small');
-                    small.textContent = new Date(note.created_at).toLocaleString();
-                    noteElement.appendChild(p);
-                    noteElement.appendChild(small);
+                    noteElement.innerHTML = `
+                        <p>${note.content}</p>
+                        <small>Created: ${new Date(note.created_at).toLocaleString()}</small>
+                    `;
                     notesList.appendChild(noteElement);
                 });
             } catch (error) {
@@ -153,6 +98,17 @@
             }
         }
 
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+            setTimeout(() => {
+                statusElement.textContent = '';
+                statusElement.className = 'status';
+            }, 5000);
+        }
+
+        // Load notes on page load
         fetchNotes();
     </script>
 </body>
