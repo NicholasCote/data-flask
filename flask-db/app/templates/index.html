@@ -1,34 +1,572 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>K8s PV Demo: Notes App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes App — Kubernetes PV Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1 { color: #333; }
-        .note { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        textarea { width: 100%; height: 100px; margin: 10px 0; }
-        button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
-        .container { display: flex; flex-direction: column; }
-        .status { padding: 10px; margin-top: 20px; border-radius: 5px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
+        :root {
+            --cisl-navy:        #011837;
+            --cisl-navy-deep:   #00357a;
+            --cisl-blue:        #0057c2;
+            --cisl-blue-bright: #007ecc;
+            --cisl-blue-light:  #e8f1fb;
+            --cisl-text:        #232323;
+            --cisl-text-muted:  #6c757d;
+            --cisl-gray-100:    #f4f4f4;
+            --cisl-gray-200:    #ededed;
+            --cisl-gray-300:    #dcdcdc;
+            --cisl-white:       #ffffff;
+            --cisl-success:     #325e1c;
+            --cisl-success-bg:  #e8f3df;
+            --cisl-error:       #a51b00;
+            --cisl-error-bg:    #fff4f4;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--cisl-text);
+            background: var(--cisl-white);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        a { color: var(--cisl-blue); text-decoration: none; }
+        a:hover { color: var(--cisl-blue-bright); text-decoration: underline; }
+
+        /* ===== Top utility bar ===== */
+        .utility-bar {
+            background: var(--cisl-navy);
+            color: var(--cisl-gray-200);
+            font-size: 0.8125rem;
+            padding: 6px 0;
+        }
+        .utility-bar .inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .utility-bar a {
+            color: var(--cisl-gray-200);
+            margin-left: 18px;
+        }
+        .utility-bar a:hover { color: #fff; text-decoration: underline; }
+
+        /* ===== Header / Brand ===== */
+        .site-header {
+            background: var(--cisl-white);
+            border-bottom: 1px solid var(--cisl-gray-300);
+            padding: 18px 0;
+        }
+        .site-header .inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+        .brand-mark {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--cisl-navy-deep), var(--cisl-blue-bright));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0, 53, 122, 0.25);
+        }
+        .brand-text { line-height: 1.15; }
+        .brand-org {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--cisl-text-muted);
+            font-weight: 500;
+        }
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--cisl-navy);
+        }
+
+        nav.primary {
+            display: flex;
+            gap: 28px;
+        }
+        nav.primary a {
+            color: var(--cisl-text);
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 6px 0;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.15s ease, color 0.15s ease;
+        }
+        nav.primary a:hover,
+        nav.primary a.active {
+            color: var(--cisl-blue);
+            border-bottom-color: var(--cisl-blue);
+            text-decoration: none;
+        }
+
+        /* ===== Hero ===== */
+        .hero {
+            background:
+                linear-gradient(135deg, rgba(1, 24, 55, 0.85) 0%, rgba(0, 53, 122, 0.75) 60%, rgba(0, 126, 204, 0.55) 100%),
+                radial-gradient(circle at 25% 30%, rgba(255,255,255,0.08), transparent 45%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.05), transparent 50%),
+                var(--cisl-navy);
+            color: var(--cisl-white);
+            padding: 72px 0 84px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+            pointer-events: none;
+        }
+        .hero .inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero .eyebrow {
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #86d3fc;
+            margin-bottom: 14px;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 600;
+            margin: 0 0 16px;
+            line-height: 1.15;
+            max-width: 760px;
+        }
+        .hero p.lede {
+            font-size: 1.125rem;
+            font-weight: 300;
+            margin: 0;
+            max-width: 640px;
+            color: #d8e3f3;
+        }
+
+        /* ===== Main content ===== */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 56px 24px 72px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 32px;
+            align-items: start;
+        }
+        @media (max-width: 860px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--cisl-white);
+            border: 1px solid var(--cisl-gray-300);
+            border-radius: 6px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .card + .card { margin-top: 24px; }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 18px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--cisl-blue);
+        }
+        .card-header .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            background: var(--cisl-blue-light);
+            color: var(--cisl-blue);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--cisl-navy);
+            letter-spacing: 0.2px;
+        }
+
+        label.field-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--cisl-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 130px;
+            padding: 12px 14px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--cisl-text);
+            background: var(--cisl-white);
+            border: 1px solid var(--cisl-gray-300);
+            border-radius: 4px;
+            resize: vertical;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--cisl-blue);
+            box-shadow: 0 0 0 3px rgba(0, 87, 194, 0.15);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        button {
+            font-family: inherit;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 10px 22px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.05s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:active { transform: translateY(1px); }
+
+        button.primary {
+            background: var(--cisl-blue);
+            color: var(--cisl-white);
+            border-color: var(--cisl-blue);
+        }
+        button.primary:hover {
+            background: var(--cisl-navy-deep);
+            border-color: var(--cisl-navy-deep);
+        }
+
+        button.secondary {
+            background: var(--cisl-white);
+            color: var(--cisl-blue);
+            border-color: var(--cisl-blue);
+        }
+        button.secondary:hover {
+            background: var(--cisl-blue-light);
+        }
+
+        /* ===== Status ===== */
+        .status {
+            padding: 0;
+            margin: 0 0 24px;
+            border-radius: 4px;
+            font-size: 0.92rem;
+            border-left: 4px solid transparent;
+            min-height: 0;
+            overflow: hidden;
+            transition: padding 0.15s ease;
+        }
+        .status:not(:empty) {
+            padding: 12px 16px;
+        }
+        .status.success {
+            background: var(--cisl-success-bg);
+            color: var(--cisl-success);
+            border-left-color: var(--cisl-success);
+        }
+        .status.error {
+            background: var(--cisl-error-bg);
+            color: var(--cisl-error);
+            border-left-color: var(--cisl-error);
+        }
+
+        /* ===== Notes list ===== */
+        #notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .note {
+            background: var(--cisl-gray-100);
+            border-left: 3px solid var(--cisl-blue);
+            border-radius: 4px;
+            padding: 16px 18px;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+        .note:hover {
+            background: var(--cisl-blue-light);
+        }
+        .note p {
+            margin: 0 0 8px;
+            color: var(--cisl-text);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .note small {
+            color: var(--cisl-text-muted);
+            font-family: "Roboto Mono", monospace;
+            font-size: 0.78rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 36px 16px;
+            color: var(--cisl-text-muted);
+            background: var(--cisl-gray-100);
+            border-radius: 4px;
+            border: 1px dashed var(--cisl-gray-300);
+        }
+        .empty-state .glyph {
+            font-size: 2rem;
+            color: var(--cisl-blue);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* ===== Info / sidebar tile ===== */
+        .info-tile {
+            background: var(--cisl-blue-light);
+            border-radius: 6px;
+            padding: 22px 24px;
+            border-left: 4px solid var(--cisl-blue);
+            margin-bottom: 24px;
+        }
+        .info-tile h3 {
+            margin: 0 0 8px;
+            color: var(--cisl-navy);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .info-tile p {
+            margin: 0;
+            font-size: 0.92rem;
+            color: var(--cisl-text);
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            background: var(--cisl-navy);
+            color: #c8d4e6;
+            padding: 40px 0 20px;
+            margin-top: 64px;
+        }
+        footer .inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        footer .cols {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 32px;
+        }
+        @media (max-width: 720px) {
+            footer .cols { grid-template-columns: 1fr; gap: 24px; }
+        }
+        footer h4 {
+            color: var(--cisl-white);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin: 0 0 12px;
+            font-weight: 600;
+        }
+        footer a { color: #c8d4e6; display: block; padding: 3px 0; font-size: 0.9rem; }
+        footer a:hover { color: var(--cisl-white); text-decoration: underline; }
+        footer p.byline {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #a8b7ce;
+            line-height: 1.6;
+        }
+        footer .legal {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 16px;
+            font-size: 0.8rem;
+            color: #8ea1c0;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Kubernetes PV Demo: Notes App</h1>
-    <div class="container">
-        <div id="status" class="status"></div>
-        <button id="init-db">Initialize Database</button>
-        <h2>Create a New Note</h2>
-        <textarea id="note-content" placeholder="Enter your note here..."></textarea>
-        <button id="create-note">Save Note</button>
-        <h2>Your Notes</h2>
-        <div id="notes-list"></div>
+    <div class="utility-bar">
+        <div class="inner">
+            <span>NSF NCAR &middot; Computational &amp; Information Systems Laboratory</span>
+            <span>
+                <a href="#">Contact</a>
+                <a href="#">Support</a>
+            </span>
+        </div>
     </div>
 
+    <header class="site-header">
+        <div class="inner">
+            <a href="/" class="brand">
+                <span class="brand-mark">NC</span>
+                <span class="brand-text">
+                    <span class="brand-org">NSF NCAR &middot; CISL</span>
+                    <span class="brand-title">Notes &mdash; Kubernetes Storage Demo</span>
+                </span>
+            </a>
+            <nav class="primary">
+                <a href="#" class="active">Notes</a>
+                <a href="#">Capabilities</a>
+                <a href="#">Documentation</a>
+                <a href="#">Support</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="inner">
+            <span class="eyebrow">Infrastructure Demo</span>
+            <h1>Persistent storage for stateful workloads on Kubernetes</h1>
+            <p class="lede">
+                A demonstration application backed by PostgreSQL on a Kubernetes PersistentVolume.
+                Create notes, refresh, restart pods &mdash; your data persists.
+            </p>
+        </div>
+    </section>
+
+    <main>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+
+        <div class="grid">
+            <div>
+                <div class="info-tile">
+                    <h3>About this demo</h3>
+                    <p>
+                        Notes are written to a PostgreSQL pod with a PersistentVolumeClaim.
+                        Use <em>Initialize Database</em> on first run to create the schema.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="icon">+</span>
+                        <h2>Create a note</h2>
+                    </div>
+                    <label class="field-label" for="note-content">Content</label>
+                    <textarea id="note-content" placeholder="Type a note&hellip;"></textarea>
+                    <div class="button-row">
+                        <button id="create-note" class="primary">Save note</button>
+                        <button id="init-db" class="secondary">Initialize database</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="icon">&#9776;</span>
+                        <h2>Your notes</h2>
+                    </div>
+                    <div id="notes-list"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="inner">
+            <div class="cols">
+                <div>
+                    <h4>About</h4>
+                    <p class="byline">
+                        The NSF National Center for Atmospheric Research is sponsored by the
+                        National Science Foundation. CISL provides advanced computing,
+                        data systems, and information services to the geoscience community.
+                    </p>
+                </div>
+                <div>
+                    <h4>Resources</h4>
+                    <a href="#">Documentation</a>
+                    <a href="#">Getting Started</a>
+                    <a href="#">API Reference</a>
+                </div>
+                <div>
+                    <h4>Connect</h4>
+                    <a href="#">GitHub</a>
+                    <a href="#">Status</a>
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+            <div class="legal">
+                <span>&copy; 2026 UCAR &middot; CISL Demo Application</span>
+                <span>Privacy &middot; Terms &middot; Accessibility</span>
+            </div>
+        </div>
+    </footer>
+
     <script>
-        // Initialize the database
+        const statusEl = document.getElementById('status');
+
+        function showStatus(message, type) {
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + type;
+            clearTimeout(showStatus._t);
+            showStatus._t = setTimeout(() => {
+                statusEl.textContent = '';
+                statusEl.className = 'status';
+            }, 5000);
+        }
+
         document.getElementById('init-db').addEventListener('click', async () => {
             try {
                 const response = await fetch('/init-db');
@@ -40,23 +578,18 @@
             }
         });
 
-        // Create a new note
         document.getElementById('create-note').addEventListener('click', async () => {
             const content = document.getElementById('note-content').value;
             if (!content) {
                 showStatus('Note content cannot be empty', 'error');
                 return;
             }
-            
             try {
                 const response = await fetch('/notes', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content }),
                 });
-                
                 if (response.ok) {
                     document.getElementById('note-content').value = '';
                     showStatus('Note created successfully!', 'success');
@@ -70,45 +603,45 @@
             }
         });
 
-        // Fetch and display notes
+        function escapeHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         async function fetchNotes() {
             try {
                 const response = await fetch('/notes');
                 const notes = await response.json();
-                
                 const notesList = document.getElementById('notes-list');
                 notesList.innerHTML = '';
-                
+
                 if (notes.length === 0) {
-                    notesList.innerHTML = '<p>No notes yet. Create one above!</p>';
+                    notesList.innerHTML = `
+                        <div class="empty-state">
+                            <span class="glyph">&#9998;</span>
+                            <div>No notes yet &mdash; create one to get started.</div>
+                        </div>`;
                     return;
                 }
-                
+
                 notes.forEach(note => {
-                    const noteElement = document.createElement('div');
-                    noteElement.className = 'note';
-                    noteElement.innerHTML = `
-                        <p>${note.content}</p>
-                        <small>Created: ${new Date(note.created_at).toLocaleString()}</small>
+                    const el = document.createElement('div');
+                    el.className = 'note';
+                    el.innerHTML = `
+                        <p>${escapeHtml(note.content)}</p>
+                        <small>${new Date(note.created_at).toLocaleString()}</small>
                     `;
-                    notesList.appendChild(noteElement);
+                    notesList.appendChild(el);
                 });
             } catch (error) {
                 showStatus('Failed to fetch notes: ' + error, 'error');
             }
         }
 
-        function showStatus(message, type) {
-            const statusElement = document.getElementById('status');
-            statusElement.textContent = message;
-            statusElement.className = 'status ' + type;
-            setTimeout(() => {
-                statusElement.textContent = '';
-                statusElement.className = 'status';
-            }, 5000);
-        }
-
-        // Load notes on page load
         fetchNotes();
     </script>
 </body>
