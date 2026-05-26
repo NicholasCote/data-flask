@@ -1,34 +1,122 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>K8s PV Demo: Notes App</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1 { color: #333; }
-        .note { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        textarea { width: 100%; height: 100px; margin: 10px 0; }
-        button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
-        .container { display: flex; flex-direction: column; }
-        .status { padding: 10px; margin-top: 20px; border-radius: 5px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K8s PV Demo &middot; Notes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Kubernetes PV Demo: Notes App</h1>
-    <div class="container">
-        <div id="status" class="status"></div>
-        <button id="init-db">Initialize Database</button>
-        <h2>Create a New Note</h2>
-        <textarea id="note-content" placeholder="Enter your note here..."></textarea>
-        <button id="create-note">Save Note</button>
-        <h2>Your Notes</h2>
-        <div id="notes-list"></div>
+    <div class="utility-bar">
+        <div class="utility-inner">
+            <a href="https://ncar.ucar.edu/" target="_blank" rel="noopener">NCAR</a>
+            <a href="https://www.ucar.edu/" target="_blank" rel="noopener">UCAR</a>
+            <a href="https://www.cisl.ucar.edu/" target="_blank" rel="noopener">CISL</a>
+        </div>
     </div>
 
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="/" class="brand">
+                <div class="brand-mark">K8s</div>
+                <div class="brand-text">
+                    <span class="brand-title">Kubernetes PV Demo</span>
+                    <span class="brand-subtitle">Persistent Storage &middot; Notes</span>
+                </div>
+            </a>
+            <nav class="site-nav" aria-label="Primary">
+                <a href="/">Home</a>
+                <a href="/notes">API</a>
+                <a href="/init-db">Init DB</a>
+                <a href="https://www.cisl.ucar.edu/" target="_blank" rel="noopener">CISL</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-inner">
+            <span class="hero-eyebrow">Computational &amp; Information Systems</span>
+            <h1>Persistent storage on Kubernetes, made tangible.</h1>
+            <p>Write notes, save them to a PostgreSQL volume, and watch state survive pod restarts. A small Flask app for exploring stateful workloads on Kubernetes.</p>
+        </div>
+    </section>
+
+    <main>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+
+        <section class="section">
+            <h2>Database</h2>
+            <p class="section-lead">Initialize the <code>notes</code> table if it does not yet exist.</p>
+            <div class="button-row">
+                <button id="init-db" class="btn-secondary" type="button">Initialize Database</button>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Create a note</h2>
+            <p class="section-lead">Add an entry to the persistent volume backing this app.</p>
+            <div class="form-row">
+                <textarea id="note-content" placeholder="Write something worth remembering&hellip;"></textarea>
+                <div class="button-row">
+                    <button id="create-note" class="btn-primary" type="button">Save Note</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Your notes</h2>
+            <p class="section-lead">Newest first &mdash; loaded from PostgreSQL on each request.</p>
+            <div id="notes-list" class="notes-grid"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-col">
+                <h4>About this demo</h4>
+                <p>A Flask + PostgreSQL notes app demonstrating Kubernetes persistent volumes. State survives pod restarts via a PV bound to the database.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Stack</h4>
+                <ul>
+                    <li>Flask (Python)</li>
+                    <li>PostgreSQL</li>
+                    <li>Kubernetes PV/PVC</li>
+                    <li>Argo Rollouts</li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>References</h4>
+                <ul>
+                    <li><a href="https://www.cisl.ucar.edu/" target="_blank" rel="noopener">CISL at NCAR</a></li>
+                    <li><a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/" target="_blank" rel="noopener">Kubernetes PVs</a></li>
+                    <li><a href="/notes">JSON API</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>Kubernetes Persistent Volume Demo</span>
+            <span>UI styled after <a href="https://www.cisl.ucar.edu/" target="_blank" rel="noopener" style="color:#fdd509">cisl.ucar.edu</a></span>
+        </div>
+    </footer>
+
     <script>
-        // Initialize the database
+        const statusElement = document.getElementById('status');
+        let statusTimer = null;
+
+        function showStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+            if (statusTimer) clearTimeout(statusTimer);
+            statusTimer = setTimeout(() => {
+                statusElement.textContent = '';
+                statusElement.className = 'status';
+            }, 5000);
+        }
+
         document.getElementById('init-db').addEventListener('click', async () => {
             try {
                 const response = await fetch('/init-db');
@@ -40,26 +128,24 @@
             }
         });
 
-        // Create a new note
         document.getElementById('create-note').addEventListener('click', async () => {
-            const content = document.getElementById('note-content').value;
+            const contentEl = document.getElementById('note-content');
+            const content = contentEl.value.trim();
             if (!content) {
                 showStatus('Note content cannot be empty', 'error');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/notes', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content }),
                 });
-                
+
                 if (response.ok) {
-                    document.getElementById('note-content').value = '';
-                    showStatus('Note created successfully!', 'success');
+                    contentEl.value = '';
+                    showStatus('Note saved.', 'success');
                     fetchNotes();
                 } else {
                     const error = await response.json();
@@ -70,27 +156,31 @@
             }
         });
 
-        // Fetch and display notes
         async function fetchNotes() {
+            const notesList = document.getElementById('notes-list');
             try {
                 const response = await fetch('/notes');
                 const notes = await response.json();
-                
-                const notesList = document.getElementById('notes-list');
+
                 notesList.innerHTML = '';
-                
+
                 if (notes.length === 0) {
-                    notesList.innerHTML = '<p>No notes yet. Create one above!</p>';
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-state';
+                    empty.textContent = 'No notes yet. Create one above.';
+                    notesList.appendChild(empty);
                     return;
                 }
-                
+
                 notes.forEach(note => {
-                    const noteElement = document.createElement('div');
+                    const noteElement = document.createElement('article');
                     noteElement.className = 'note';
-                    noteElement.innerHTML = `
-                        <p>${note.content}</p>
-                        <small>Created: ${new Date(note.created_at).toLocaleString()}</small>
-                    `;
+                    const p = document.createElement('p');
+                    p.textContent = note.content;
+                    const small = document.createElement('small');
+                    small.textContent = new Date(note.created_at).toLocaleString();
+                    noteElement.appendChild(p);
+                    noteElement.appendChild(small);
                     notesList.appendChild(noteElement);
                 });
             } catch (error) {
@@ -98,17 +188,6 @@
             }
         }
 
-        function showStatus(message, type) {
-            const statusElement = document.getElementById('status');
-            statusElement.textContent = message;
-            statusElement.className = 'status ' + type;
-            setTimeout(() => {
-                statusElement.textContent = '';
-                statusElement.className = 'status';
-            }, 5000);
-        }
-
-        // Load notes on page load
         fetchNotes();
     </script>
 </body>
