@@ -1,9 +1,13 @@
 # app.py
 from flask import Flask, request, jsonify, render_template
+from werkzeug.middleware.proxy_fix import ProxyFix
 import psycopg2
 import os
 
 app = Flask(__name__)
+# Trust X-Forwarded-* headers from the traefik-internal proxy (1 hop) so the
+# access log / request.remote_addr reflect the real client source IP.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 def get_db_connection():
     conn = psycopg2.connect(
