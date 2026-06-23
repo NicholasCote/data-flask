@@ -24,6 +24,18 @@ def get_db_connection():
 def index():
     return render_template('index.html')
 
+@app.route('/debug/ip')
+def debug_ip():
+    # TEMP diagnostic: reveal the raw forwarded chain so we can determine the
+    # correct ProxyFix hop count (or whether the client IP reaches us at all).
+    return jsonify({
+        'x_forwarded_for': request.headers.get('X-Forwarded-For'),
+        'x_real_ip': request.headers.get('X-Real-IP'),
+        'forwarded': request.headers.get('Forwarded'),
+        'remote_addr': request.remote_addr,
+        'access_route': list(request.access_route),
+    })
+
 @app.route('/notes', methods=['GET'])
 def get_notes():
     conn = get_db_connection()
