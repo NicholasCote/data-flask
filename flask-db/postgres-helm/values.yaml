@@ -12,7 +12,7 @@ webapp:
       fqdn: ncote-db-test-preview.k8s.ucar.edu
       secretName: ncote-db-test-preview-tls
   container: 
-    image: docker.io/ncote/flask-db-demo:2026-06-22.22.47
+    image: docker.io/ncote/flask-db-demo:2026-06-23.17.20
     port: 5000
     memory: 1G
     cpu: 2
