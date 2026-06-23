@@ -5,11 +5,13 @@ import psycopg2
 import os
 
 app = Flask(__name__)
-# Trust X-Forwarded-For from the proxy chain in front of the app (2 hops: an
-# upstream proxy + traefik-internal) so the access log / request.remote_addr
-# reflect the real client source IP rather than an internal proxy address.
-# x_for=2 verified against the preview ingress; x_proto/x_host left at 1.
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=1, x_host=1)
+# Trust one X-Forwarded-For hop from traefik-internal so the access log /
+# request.remote_addr reflect the client IP traefik forwards. NOTE: the real
+# client IP only arrives here once traefik-internal trusts its upstream
+# (forwardedHeaders.trustedIPs) and preserves the header; until then this
+# surfaces the internal proxy address. The header reaching the pod has a single
+# entry, so x_for=1 is correct (x_for>1 overshoots to the raw TCP peer).
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 def get_db_connection():
     conn = psycopg2.connect(
