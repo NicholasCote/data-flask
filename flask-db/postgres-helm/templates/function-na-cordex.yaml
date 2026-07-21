@@ -1,0 +1,23 @@
+# Function: binds the package to an entrypoint. The code-checksum annotation
+# is bumped by CI on every release so the Function spec changes whenever the
+# code does -- this is what invalidates the executor's specialization cache.
+# Without it, warm pool pods can keep serving old code after a release.
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  name: na-cordex-point
+  namespace: ncote
+  annotations:
+    cirrus.ucar.edu/code-checksum: "090eba2fd61911b0bdac795a698fd48d8ca0406a374c9a6a2213904629cbef84"
+spec:
+  environment:
+    name: gdex-point
+    namespace: ncote
+  package:
+    packageref:
+      name: na-cordex
+      namespace: ncote
+    functionName: na_cordex.main
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr

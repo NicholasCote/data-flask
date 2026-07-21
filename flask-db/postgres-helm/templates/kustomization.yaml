@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ncote
+resources:
+  - environment.yaml
+  # Per-dataset triple: package (own zip) + function + httptrigger.
+  # Add a dataset by dropping its three manifests here alongside the module
+  # in functions/; Argo CD picks them up and CI pins them on the next tag.
+  - package-na-cordex.yaml
+  - function-na-cordex.yaml
+  - httptrigger-na-cordex.yaml

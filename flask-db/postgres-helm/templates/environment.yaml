@@ -1,0 +1,13 @@
+# Environment: shared runtime for all functions in this namespace that use
+# this image. No builder configured -- dependencies live in the image.
+apiVersion: fission.io/v1
+kind: Environment
+metadata:
+  name: gdex-point
+  namespace: ncote
+spec:
+  version: 3
+  poolsize: 1
+  runtime:
+    # Pinned by CI on each release (yq updates the tag)
+    image: hub.k8s.ucar.edu/ncote/gdex-point-env:dev-a1f782a

@@ -1,0 +1,25 @@
+# HTTPTrigger: exposes the function on the shared FaaS gateway. Field names
+# verified against a live trigger created by the fission CLI (v1.27-era).
+# Remember: paths on fn.k8s.ucar.edu are first-come-first-served globally --
+# keep the namespace/username prefix.
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  name: na-cordex-point
+  namespace: ncote
+spec:
+  functionref:
+    type: name
+    name: na-cordex-point
+  methods:
+    - GET
+  relativeurl: /ncote/gdex-test/na-cordex/point
+  routeConfig:
+    provider: gateway
+    gateway:
+      parentRefs:
+        - name: traefik-gateway
+          namespace: traefik
+    hostnames:
+      - fn.k8s.ucar.edu
+    path: /ncote/gdex-test/na-cordex/point
