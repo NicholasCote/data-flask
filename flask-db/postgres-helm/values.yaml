@@ -32,4 +32,4 @@ db:
     name: flask-db-demo-pv
     size: 1Gi
 nfs:
-  homePath: /glade/u/home/ncote
+  homePath: /gpfs/u/home/ncote
