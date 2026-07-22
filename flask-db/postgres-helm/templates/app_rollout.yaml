@@ -22,6 +22,17 @@ spec:
       labels:
         app: {{ .Values.webapp.name }}
     spec:
+      securityContext:
+        runAsUser: 41188
+        runAsGroup: 1000
+        supplementalGroups:
+        - 68282
+        fsGroup: 1000
+      volumes:
+      - name: home
+        nfs:
+          server: gladenfs.hpc.ucar.edu
+          path: {{ .Values.nfs.homePath }}
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
@@ -32,6 +43,8 @@ spec:
         ports:
         - containerPort: {{ .Values.webapp.container.port }}
         env:
+        - name: BROWSE_ROOT
+          value: /home
         - name: DB_HOST
           value: {{ .Values.db.name }}.k8s.ucar.edu
         - name: DB_NAME
@@ -46,3 +59,6 @@ spec:
             secretKeyRef:
               name: {{ .Values.webapp.name }}-app-user
               key: password
+        volumeMounts:
+        - name: home
+          mountPath: /home

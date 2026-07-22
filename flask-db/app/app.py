@@ -1,88 +1,115 @@
-# app.py
-from flask import Flask, request, jsonify, render_template
-from werkzeug.middleware.proxy_fix import ProxyFix
-import psycopg2
 import os
+from flask import Flask, request, jsonify, render_template, abort
 
 app = Flask(__name__)
-# Trust one X-Forwarded-For hop from traefik-internal so the access log /
-# request.remote_addr reflect the client IP traefik forwards. NOTE: the real
-# client IP only arrives here once traefik-internal trusts its upstream
-# (forwardedHeaders.trustedIPs) and preserves the header; until then this
-# surfaces the internal proxy address. The header reaching the pod has a single
-# entry, so x_for=1 is correct (x_for>1 overshoots to the raw TCP peer).
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
-def get_db_connection():
-    conn = psycopg2.connect(
-        host=os.environ.get('DB_HOST', 'postgres'),
-        database=os.environ.get('DB_NAME', 'notesdb'),
-        user=os.environ.get('DB_USER', 'postgres'),
-        password=os.environ.get('DB_PASSWORD', 'mysecretpassword')
-    )
-    return conn
+# The NFS home mount root inside the pod. Everything the browser can see is
+# confined to this directory -- see safe_resolve() below. Set via the
+# BROWSE_ROOT env in the Rollout (defaults to /home).
+BROWSE_ROOT = os.environ.get('BROWSE_ROOT', '/home')
+
+
+def safe_resolve(rel_path):
+    """Resolve a user-supplied relative path against BROWSE_ROOT and refuse
+    anything that escapes it. Returns an absolute path guaranteed to be inside
+    BROWSE_ROOT, or raises ValueError.
+
+    realpath() resolves symlinks too, so a symlink inside the mount that points
+    out of it (e.g. into / or another export) also gets rejected -- important on
+    a real home dir where dotfile symlinks are common."""
+    root = os.path.realpath(BROWSE_ROOT)
+    # Treat the incoming path as relative regardless of leading slashes.
+    candidate = os.path.realpath(os.path.join(root, rel_path.lstrip('/')))
+    if candidate != root and not candidate.startswith(root + os.sep):
+        raise ValueError('path escapes browse root')
+    return candidate
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/debug/ip')
-def debug_ip():
-    # TEMP diagnostic: reveal the raw forwarded chain so we can determine the
-    # correct ProxyFix hop count (or whether the client IP reaches us at all).
+
+@app.route('/whoami')
+def whoami():
+    """Report the process identity as seen inside the container. Pair this with
+    the uid/gid columns in /browse: if the pod runs as uid 41188 but files show
+    as 'nobody', that's an idmapd (Domain = ucar.edu) issue on the node, not a
+    securityContext one."""
+    try:
+        groups = os.getgroups()
+    except OSError:
+        groups = []
     return jsonify({
-        'x_forwarded_for': request.headers.get('X-Forwarded-For'),
-        'x_real_ip': request.headers.get('X-Real-IP'),
-        'forwarded': request.headers.get('Forwarded'),
-        'remote_addr': request.remote_addr,
-        'access_route': list(request.access_route),
+        'uid': os.getuid(),
+        'gid': os.getgid(),
+        'groups': groups,
+        'browse_root': BROWSE_ROOT,
     })
 
-@app.route('/notes', methods=['GET'])
-def get_notes():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT id, content, created_at FROM notes ORDER BY created_at DESC;')
-    notes = cur.fetchall()
-    cur.close()
-    conn.close()
-    return jsonify([{'id': note[0], 'content': note[1], 'created_at': note[2].isoformat()} for note in notes])
 
-@app.route('/notes', methods=['POST'])
-def create_note():
-    content = request.json.get('content', '')
-    if not content:
-        return jsonify({'error': 'Content is required'}), 400
-    
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('INSERT INTO notes (content) VALUES (%s) RETURNING id, content, created_at;', (content,))
-    new_note = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    return jsonify({'id': new_note[0], 'content': new_note[1], 'created_at': new_note[2].isoformat()})
+@app.route('/browse')
+def browse():
+    rel = request.args.get('path', '')
+    try:
+        target = safe_resolve(rel)
+    except ValueError:
+        abort(403)
 
-@app.route('/init-db')
-def init_db():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    # Check if table exists before creating
-    cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'notes');")
-    table_exists = cur.fetchone()[0]
-    
-    if not table_exists:
-        cur.execute('CREATE TABLE notes (id SERIAL PRIMARY KEY, content TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);')
-        conn.commit()
-        message = "Database initialized successfully!"
-    else:
-        message = "Database already initialized."
-    
-    cur.close()
-    conn.close()
-    return jsonify({'message': message})
+    if not os.path.exists(target):
+        abort(404)
+    if not os.path.isdir(target):
+        abort(400, description='Not a directory')
+
+    entries = []
+    try:
+        with os.scandir(target) as it:
+            for e in it:
+                try:
+                    st = e.stat(follow_symlinks=False)
+                    entries.append({
+                        'name': e.name,
+                        'is_dir': e.is_dir(follow_symlinks=False),
+                        'is_link': e.is_symlink(),
+                        'size': st.st_size,
+                        'uid': st.st_uid,
+                        'gid': st.st_gid,
+                        'mode': oct(st.st_mode & 0o777),
+                    })
+                except OSError:
+                    # Entry we can't stat (permissions, broken symlink) -- list
+                    # the name so the UID/GID story is still visible, mark it
+                    # unreadable.
+                    entries.append({
+                        'name': e.name,
+                        'is_dir': False,
+                        'is_link': False,
+                        'size': None,
+                        'uid': None,
+                        'gid': None,
+                        'mode': None,
+                    })
+    except PermissionError:
+        abort(403, description='Permission denied reading directory')
+
+    entries.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+
+    # Relative path from root, for display and breadcrumb "up" navigation.
+    root = os.path.realpath(BROWSE_ROOT)
+    rel_display = '' if target == root else os.path.relpath(target, root)
+    parent = None
+    if target != root:
+        parent = os.path.relpath(os.path.dirname(target), root)
+        if parent == '.':
+            parent = ''
+
+    return jsonify({
+        'root': BROWSE_ROOT,
+        'path': rel_display,
+        'parent': parent,
+        'entries': entries,
+    })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

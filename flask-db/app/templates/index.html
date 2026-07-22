@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes App — Kubernetes PV Demo</title>
+    <title>Home Directory Browser — Kubernetes NFS Mount Test</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono&display=swap" rel="stylesheet">
@@ -24,6 +24,8 @@
             --cisl-success-bg:  #e8f3df;
             --cisl-error:       #a51b00;
             --cisl-error-bg:    #fff4f4;
+            --cisl-warn:        #7a5200;
+            --cisl-warn-bg:     #fdf3e0;
         }
 
         * { box-sizing: border-box; }
@@ -138,7 +140,7 @@
                 radial-gradient(circle at 80% 70%, rgba(255,255,255,0.05), transparent 50%),
                 var(--cisl-navy);
             color: var(--cisl-white);
-            padding: 72px 0 84px;
+            padding: 60px 0 68px;
             position: relative;
             overflow: hidden;
         }
@@ -171,17 +173,17 @@
             margin-bottom: 14px;
         }
         .hero h1 {
-            font-size: clamp(2rem, 4vw, 3rem);
+            font-size: clamp(1.8rem, 3.4vw, 2.6rem);
             font-weight: 600;
             margin: 0 0 16px;
             line-height: 1.15;
             max-width: 760px;
         }
         .hero p.lede {
-            font-size: 1.125rem;
+            font-size: 1.0625rem;
             font-weight: 300;
             margin: 0;
-            max-width: 640px;
+            max-width: 660px;
             color: #d8e3f3;
         }
 
@@ -189,126 +191,9 @@
         main {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 56px 24px 72px;
+            padding: 44px 24px 72px;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 32px;
-            align-items: start;
-        }
-        @media (max-width: 860px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-
-        .card {
-            background: var(--cisl-white);
-            border: 1px solid var(--cisl-gray-300);
-            border-radius: 6px;
-            padding: 28px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-        }
-        .card + .card { margin-top: 24px; }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 0 0 18px;
-            padding-bottom: 14px;
-            border-bottom: 2px solid var(--cisl-blue);
-        }
-        .card-header .icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 4px;
-            background: var(--cisl-blue-light);
-            color: var(--cisl-blue);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
-        .card-header h2 {
-            margin: 0;
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: var(--cisl-navy);
-            letter-spacing: 0.2px;
-        }
-
-        label.field-label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--cisl-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 8px;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 130px;
-            padding: 12px 14px;
-            font-family: inherit;
-            font-size: 0.95rem;
-            color: var(--cisl-text);
-            background: var(--cisl-white);
-            border: 1px solid var(--cisl-gray-300);
-            border-radius: 4px;
-            resize: vertical;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
-        }
-        textarea:focus {
-            outline: none;
-            border-color: var(--cisl-blue);
-            box-shadow: 0 0 0 3px rgba(0, 87, 194, 0.15);
-        }
-
-        .button-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
-        button {
-            font-family: inherit;
-            font-weight: 500;
-            font-size: 0.95rem;
-            padding: 10px 22px;
-            border-radius: 4px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.05s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        button:active { transform: translateY(1px); }
-
-        button.primary {
-            background: var(--cisl-blue);
-            color: var(--cisl-white);
-            border-color: var(--cisl-blue);
-        }
-        button.primary:hover {
-            background: var(--cisl-navy-deep);
-            border-color: var(--cisl-navy-deep);
-        }
-
-        button.secondary {
-            background: var(--cisl-white);
-            color: var(--cisl-blue);
-            border-color: var(--cisl-blue);
-        }
-        button.secondary:hover {
-            background: var(--cisl-blue-light);
-        }
-
-        /* ===== Status ===== */
         .status {
             padding: 0;
             margin: 0 0 24px;
@@ -333,40 +218,168 @@
             border-left-color: var(--cisl-error);
         }
 
-        /* ===== Notes list ===== */
-        #notes-list {
+        /* ===== Identity strip (whoami) ===== */
+        .identity {
             display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .note {
-            background: var(--cisl-gray-100);
-            border-left: 3px solid var(--cisl-blue);
-            border-radius: 4px;
-            padding: 16px 18px;
-            transition: background 0.15s ease, transform 0.1s ease;
-        }
-        .note:hover {
+            flex-wrap: wrap;
+            gap: 10px 28px;
+            align-items: center;
             background: var(--cisl-blue-light);
-        }
-        .note p {
-            margin: 0 0 8px;
-            color: var(--cisl-text);
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        .note small {
-            color: var(--cisl-text-muted);
+            border-left: 4px solid var(--cisl-blue);
+            border-radius: 6px;
+            padding: 16px 22px;
+            margin-bottom: 24px;
             font-family: "Roboto Mono", monospace;
-            font-size: 0.78rem;
+            font-size: 0.86rem;
         }
+        .identity .id-label {
+            font-family: "Poppins", sans-serif;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--cisl-text-muted);
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .identity .id-val { color: var(--cisl-navy); font-weight: 500; }
+
+        /* ===== Browser card ===== */
+        .card {
+            background: var(--cisl-white);
+            border: 1px solid var(--cisl-gray-300);
+            border-radius: 6px;
+            padding: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+            padding: 20px 24px 16px;
+            border-bottom: 2px solid var(--cisl-blue);
+        }
+        .card-header .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            background: var(--cisl-blue-light);
+            color: var(--cisl-blue);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--cisl-navy);
+            letter-spacing: 0.2px;
+        }
+
+        /* breadcrumb / path bar */
+        .pathbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 24px;
+            background: var(--cisl-gray-100);
+            border-bottom: 1px solid var(--cisl-gray-300);
+            font-family: "Roboto Mono", monospace;
+            font-size: 0.86rem;
+            color: var(--cisl-text-muted);
+            flex-wrap: wrap;
+        }
+        .pathbar .cwd { color: var(--cisl-navy); word-break: break-all; }
+        .pathbar .up-btn {
+            font-family: "Poppins", sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 5px 14px;
+            border-radius: 4px;
+            border: 1px solid var(--cisl-blue);
+            background: var(--cisl-white);
+            color: var(--cisl-blue);
+            cursor: pointer;
+            transition: background 0.15s ease;
+            white-space: nowrap;
+        }
+        .pathbar .up-btn:hover { background: var(--cisl-blue-light); }
+        .pathbar .up-btn:disabled {
+            opacity: 0.4;
+            cursor: default;
+            border-color: var(--cisl-gray-300);
+            color: var(--cisl-text-muted);
+        }
+
+        /* listing table */
+        .listing { width: 100%; }
+        .listing .row {
+            display: grid;
+            grid-template-columns: 1fr 90px 110px 92px;
+            gap: 16px;
+            align-items: center;
+            padding: 11px 24px;
+            border-bottom: 1px solid var(--cisl-gray-200);
+            font-size: 0.9rem;
+        }
+        .listing .row.head {
+            font-family: "Poppins", sans-serif;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--cisl-text-muted);
+            font-weight: 600;
+            background: var(--cisl-white);
+            position: sticky;
+            top: 0;
+        }
+        .listing .row:not(.head):hover { background: var(--cisl-blue-light); }
+        .listing .row:last-child { border-bottom: none; }
+        .listing .name {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 0;
+        }
+        .listing .name .glyph { flex: none; }
+        .listing .name .label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .listing .name a { font-weight: 500; }
+        .listing .link-tag {
+            font-family: "Roboto Mono", monospace;
+            font-size: 0.7rem;
+            color: var(--cisl-text-muted);
+            border: 1px solid var(--cisl-gray-300);
+            border-radius: 3px;
+            padding: 0 5px;
+            flex: none;
+        }
+        .listing .meta {
+            font-family: "Roboto Mono", monospace;
+            font-size: 0.82rem;
+            color: var(--cisl-text-muted);
+        }
+        /* nobody / unresolved ownership gets flagged — this is the idmapd tell */
+        .listing .owner.nobody {
+            color: var(--cisl-warn);
+            background: var(--cisl-warn-bg);
+            border-radius: 3px;
+            padding: 1px 6px;
+        }
+        .listing .owner.unreadable { color: var(--cisl-error); }
+
         .empty-state {
             text-align: center;
-            padding: 36px 16px;
+            padding: 44px 16px;
             color: var(--cisl-text-muted);
-            background: var(--cisl-gray-100);
-            border-radius: 4px;
-            border: 1px dashed var(--cisl-gray-300);
         }
         .empty-state .glyph {
             font-size: 2rem;
@@ -375,24 +388,9 @@
             display: block;
         }
 
-        /* ===== Info / sidebar tile ===== */
-        .info-tile {
-            background: var(--cisl-blue-light);
-            border-radius: 6px;
-            padding: 22px 24px;
-            border-left: 4px solid var(--cisl-blue);
-            margin-bottom: 24px;
-        }
-        .info-tile h3 {
-            margin: 0 0 8px;
-            color: var(--cisl-navy);
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        .info-tile p {
-            margin: 0;
-            font-size: 0.92rem;
-            color: var(--cisl-text);
+        @media (max-width: 640px) {
+            .listing .row { grid-template-columns: 1fr 76px; }
+            .listing .col-size, .listing .col-mode { display: none; }
         }
 
         /* ===== Footer ===== */
@@ -461,11 +459,11 @@
                 <span class="brand-mark">NC</span>
                 <span class="brand-text">
                     <span class="brand-org">NSF NCAR &middot; CISL</span>
-                    <span class="brand-title">Notes &mdash; Kubernetes Storage Demo</span>
+                    <span class="brand-title">Home Directory Browser &mdash; NFS Mount Test</span>
                 </span>
             </a>
             <nav class="primary">
-                <a href="#" class="active">Notes</a>
+                <a href="#" class="active">Browser</a>
                 <a href="#">Capabilities</a>
                 <a href="#">Documentation</a>
                 <a href="#">Support</a>
@@ -475,11 +473,12 @@
 
     <section class="hero">
         <div class="inner">
-            <span class="eyebrow">Infrastructure Demo</span>
-            <h1>Persistent storage for stateful workloads on Kubernetes</h1>
+            <span class="eyebrow">Infrastructure Test</span>
+            <h1>Verifying GLADE home directory mounts on Kubernetes</h1>
             <p class="lede">
-                A demonstration application backed by PostgreSQL on a Kubernetes PersistentVolume.
-                Create notes, refresh, restart pods &mdash; your data persists.
+                A read-only browser over the NFS-mounted home directory inside this pod.
+                Confirms the volume binds, and that ownership resolves to real UID/GIDs
+                rather than <code>nobody</code>.
             </p>
         </div>
     </section>
@@ -487,39 +486,20 @@
     <main>
         <div id="status" class="status" role="status" aria-live="polite"></div>
 
-        <div class="grid">
-            <div>
-                <div class="info-tile">
-                    <h3>About this demo</h3>
-                    <p>
-                        Notes are written to a PostgreSQL pod with a PersistentVolumeClaim.
-                        Use <em>Initialize Database</em> on first run to create the schema.
-                    </p>
-                </div>
+        <div class="identity" id="identity" aria-live="polite">
+            <span><span class="id-label">Pod identity</span><span class="id-val" id="id-uid">loading&hellip;</span></span>
+        </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <span class="icon">+</span>
-                        <h2>Create a note</h2>
-                    </div>
-                    <label class="field-label" for="note-content">Content</label>
-                    <textarea id="note-content" placeholder="Type a note&hellip;"></textarea>
-                    <div class="button-row">
-                        <button id="create-note" class="primary">Save note</button>
-                        <button id="init-db" class="secondary">Initialize database</button>
-                    </div>
-                </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">&#128193;</span>
+                <h2>Mounted home directory</h2>
             </div>
-
-            <div>
-                <div class="card">
-                    <div class="card-header">
-                        <span class="icon">&#9776;</span>
-                        <h2>Your notes</h2>
-                    </div>
-                    <div id="notes-list"></div>
-                </div>
+            <div class="pathbar">
+                <span class="cwd" id="cwd">&mdash;</span>
+                <button class="up-btn" id="up-btn" disabled>&#8593; Up one level</button>
             </div>
+            <div class="listing" id="listing"></div>
         </div>
     </main>
 
@@ -548,7 +528,7 @@
                 </div>
             </div>
             <div class="legal">
-                <span>&copy; 2026 UCAR &middot; CISL Demo Application</span>
+                <span>&copy; 2026 UCAR &middot; CISL Infrastructure Test</span>
                 <span>Privacy &middot; Terms &middot; Accessibility</span>
             </div>
         </div>
@@ -564,44 +544,8 @@
             showStatus._t = setTimeout(() => {
                 statusEl.textContent = '';
                 statusEl.className = 'status';
-            }, 5000);
+            }, 6000);
         }
-
-        document.getElementById('init-db').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/init-db');
-                const data = await response.json();
-                showStatus(data.message, 'success');
-                fetchNotes();
-            } catch (error) {
-                showStatus('Failed to initialize database: ' + error, 'error');
-            }
-        });
-
-        document.getElementById('create-note').addEventListener('click', async () => {
-            const content = document.getElementById('note-content').value;
-            if (!content) {
-                showStatus('Note content cannot be empty', 'error');
-                return;
-            }
-            try {
-                const response = await fetch('/notes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content }),
-                });
-                if (response.ok) {
-                    document.getElementById('note-content').value = '';
-                    showStatus('Note created successfully!', 'success');
-                    fetchNotes();
-                } else {
-                    const error = await response.json();
-                    showStatus(error.error || 'Failed to create note', 'error');
-                }
-            } catch (error) {
-                showStatus('Failed to create note: ' + error, 'error');
-            }
-        });
 
         function escapeHtml(s) {
             return String(s)
@@ -612,37 +556,133 @@
                 .replace(/'/g, '&#39;');
         }
 
-        async function fetchNotes() {
+        function fmtSize(n) {
+            if (n === null) return '—';
+            if (n < 1024) return n + ' B';
+            if (n < 1048576) return (n / 1024).toFixed(1) + ' K';
+            if (n < 1073741824) return (n / 1048576).toFixed(1) + ' M';
+            return (n / 1073741824).toFixed(1) + ' G';
+        }
+
+        // Ownership >= 65534 (nobody/nogroup on most systems) is the classic
+        // idmapd-not-configured signal, so flag it visually.
+        const NOBODY = 65534;
+
+        let currentPath = '';
+        let parentPath = null;
+
+        async function loadIdentity() {
             try {
-                const response = await fetch('/notes');
-                const notes = await response.json();
-                const notesList = document.getElementById('notes-list');
-                notesList.innerHTML = '';
-
-                if (notes.length === 0) {
-                    notesList.innerHTML = `
-                        <div class="empty-state">
-                            <span class="glyph">&#9998;</span>
-                            <div>No notes yet &mdash; create one to get started.</div>
-                        </div>`;
-                    return;
-                }
-
-                notes.forEach(note => {
-                    const el = document.createElement('div');
-                    el.className = 'note';
-                    el.innerHTML = `
-                        <p>${escapeHtml(note.content)}</p>
-                        <small>${new Date(note.created_at).toLocaleString()}</small>
-                    `;
-                    notesList.appendChild(el);
-                });
+                const resp = await fetch('/whoami');
+                const d = await resp.json();
+                const groups = (d.groups || []).join(', ');
+                document.getElementById('identity').innerHTML =
+                    '<span><span class="id-label">uid</span><span class="id-val">' + d.uid + '</span></span>' +
+                    '<span><span class="id-label">gid</span><span class="id-val">' + d.gid + '</span></span>' +
+                    '<span><span class="id-label">groups</span><span class="id-val">' + escapeHtml(groups) + '</span></span>' +
+                    '<span><span class="id-label">root</span><span class="id-val">' + escapeHtml(d.browse_root) + '</span></span>';
             } catch (error) {
-                showStatus('Failed to fetch notes: ' + error, 'error');
+                document.getElementById('identity').innerHTML =
+                    '<span class="id-val">Could not read pod identity: ' + escapeHtml(String(error)) + '</span>';
             }
         }
 
-        fetchNotes();
+        async function browse(path) {
+            try {
+                const resp = await fetch('/browse?path=' + encodeURIComponent(path || ''));
+                if (!resp.ok) {
+                    let detail = resp.status;
+                    try { const e = await resp.json(); if (e.description) detail += ' — ' + e.description; } catch (_) {}
+                    showStatus('Cannot open path (' + detail + ')', 'error');
+                    return;
+                }
+                const data = await resp.json();
+                currentPath = data.path;
+                parentPath = data.parent;
+                renderPathbar(data);
+                renderListing(data);
+            } catch (error) {
+                showStatus('Failed to list directory: ' + error, 'error');
+            }
+        }
+
+        function renderPathbar(data) {
+            const shown = data.path ? data.root.replace(/\/$/, '') + '/' + data.path : data.root;
+            document.getElementById('cwd').textContent = shown;
+            const up = document.getElementById('up-btn');
+            up.disabled = (data.parent === null);
+        }
+
+        function ownerCell(entry) {
+            if (entry.uid === null) {
+                return '<span class="meta owner unreadable">unreadable</span>';
+            }
+            const isNobody = (entry.uid >= NOBODY || entry.gid >= NOBODY);
+            const cls = 'meta owner' + (isNobody ? ' nobody' : '');
+            return '<span class="' + cls + '">' + entry.uid + ':' + entry.gid + '</span>';
+        }
+
+        function renderListing(data) {
+            const list = document.getElementById('listing');
+            list.innerHTML = '';
+
+            // header row
+            const head = document.createElement('div');
+            head.className = 'row head';
+            head.innerHTML =
+                '<span>Name</span>' +
+                '<span class="col-size">Size</span>' +
+                '<span>Owner uid:gid</span>' +
+                '<span class="col-mode">Mode</span>';
+            list.appendChild(head);
+
+            if (data.entries.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.innerHTML = '<span class="glyph">&#128193;</span><div>Empty directory.</div>';
+                list.appendChild(empty);
+                return;
+            }
+
+            data.entries.forEach(entry => {
+                const row = document.createElement('div');
+                row.className = 'row';
+
+                const glyph = entry.is_dir ? '&#128193;' : '&#128196;';
+                const linkTag = entry.is_link ? '<span class="link-tag">link</span>' : '';
+                let nameHtml;
+                if (entry.is_dir) {
+                    nameHtml = '<span class="glyph">' + glyph + '</span>' +
+                               '<a href="#" class="label dir-link">' + escapeHtml(entry.name) + '/</a>' + linkTag;
+                } else {
+                    nameHtml = '<span class="glyph">' + glyph + '</span>' +
+                               '<span class="label">' + escapeHtml(entry.name) + '</span>' + linkTag;
+                }
+
+                row.innerHTML =
+                    '<span class="name">' + nameHtml + '</span>' +
+                    '<span class="meta col-size">' + fmtSize(entry.size) + '</span>' +
+                    ownerCell(entry) +
+                    '<span class="meta col-mode">' + escapeHtml(entry.mode || '—') + '</span>';
+
+                if (entry.is_dir) {
+                    const link = row.querySelector('.dir-link');
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const next = currentPath ? currentPath + '/' + entry.name : entry.name;
+                        browse(next);
+                    });
+                }
+                list.appendChild(row);
+            });
+        }
+
+        document.getElementById('up-btn').addEventListener('click', () => {
+            if (parentPath !== null) browse(parentPath);
+        });
+
+        loadIdentity();
+        browse('');
     </script>
 </body>
 </html>
