@@ -31,3 +31,5 @@ db:
   volume:
     name: flask-db-demo-pv
     size: 1Gi
+nfs:
+  homePath: /glade/u/home/ncote
