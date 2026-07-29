@@ -1,0 +1,21 @@
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  name: myfunc
+  namespace: ncote
+  annotations:
+    # Bumped by CI to the archive checksum on every release, so the Function
+    # spec changes whenever the code does.
+    cirrus.ucar.edu/code-checksum: "3a1c565ab1f97e69c2f74e38c13c9cb02185db559fc186413a68d2eb7783046f"
+spec:
+  environment:
+    name: python-app
+    namespace: ncote
+  package:
+    packageref:
+      name: myfunc
+      namespace: ncote
+    functionName: myfunc.main
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr

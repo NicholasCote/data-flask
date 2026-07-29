@@ -1,0 +1,21 @@
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  name: myfunc
+  namespace: ncote
+spec:
+  functionref:
+    type: name
+    name: myfunc
+  methods:
+    - GET
+  relativeurl: /ncote/myfunc
+  routeConfig:
+    provider: gateway
+    gateway:
+      parentRefs:
+        - name: traefik-gateway
+          namespace: traefik
+    hostnames:
+      - fn.k8s.ucar.edu
+    path: /ncote/myfunc

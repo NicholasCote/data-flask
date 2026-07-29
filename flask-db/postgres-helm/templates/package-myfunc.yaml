@@ -1,0 +1,20 @@
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  name: myfunc
+  namespace: ncote
+spec:
+  environment:
+    name: python-app
+    namespace: ncote
+  deployment:
+    type: url
+    # Both pinned by CI. Use a release *asset* URL, not a
+    # github.com/<org>/<repo>/archive/... auto-generated zip — those are not
+    # byte-stable and will break the checksum.
+    url: https://github.com/NicholasCote/fission-test/releases/download/dev/myfunc-dev-42f424e.zip
+    checksum:
+      type: sha256
+      sum: "3a1c565ab1f97e69c2f74e38c13c9cb02185db559fc186413a68d2eb7783046f"
+status:
+  buildstatus: none

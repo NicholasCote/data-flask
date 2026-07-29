@@ -1,0 +1,10 @@
+apiVersion: fission.io/v1
+kind: Environment
+metadata:
+  name: python-app
+  namespace: ncote
+spec:
+  version: 3
+  poolsize: 1
+  runtime:
+    image: hub.k8s.ucar.edu/ncote/python-app-env:dev-42f424e
