@@ -1,7 +1,15 @@
 import os
 from flask import Flask, request, jsonify, render_template, abort
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+# Trust one X-Forwarded-For hop from traefik-internal so the access log /
+# request.remote_addr reflect the client IP traefik forwards. NOTE: the real
+# client IP only arrives here once traefik-internal trusts its upstream
+# (forwardedHeaders.trustedIPs) and preserves the header; until then this
+# surfaces the internal proxy address. The header reaching the pod has a single
+# entry, so x_for=1 is correct (x_for>1 overshoots to the raw TCP peer).
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # The NFS home mount root inside the pod. Everything the browser can see is
 # confined to this directory -- see safe_resolve() below. Set via the
