@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Directory Browser — Kubernetes NFS Mount Test</title>
+    <title>GLADE Browser — Kubernetes NFS Mount Test</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono&display=swap" rel="stylesheet">
@@ -459,7 +459,7 @@
                 <span class="brand-mark">NC</span>
                 <span class="brand-text">
                     <span class="brand-org">NSF NCAR &middot; CISL</span>
-                    <span class="brand-title">Home Directory Browser &mdash; NFS Mount Test</span>
+                    <span class="brand-title">GLADE Browser &mdash; NFS Mount Test</span>
                 </span>
             </a>
             <nav class="primary">
@@ -474,10 +474,10 @@
     <section class="hero">
         <div class="inner">
             <span class="eyebrow">Infrastructure Test</span>
-            <h1>Verifying GLADE home directory mounts on Kubernetes</h1>
+            <h1>Verifying GLADE home and apps mounts on Kubernetes</h1>
             <p class="lede">
-                A read-only browser over the NFS-mounted home directory inside this pod.
-                Confirms the volume binds, and that ownership resolves to real UID/GIDs
+                A read-only browser over the NFS-mounted <code>/glade/u/home</code> and <code>/glade/u/apps</code> directories inside this pod.
+                Confirms the volumes bind, and that ownership resolves to real UID/GIDs
                 rather than <code>nobody</code>.
             </p>
         </div>
@@ -493,7 +493,7 @@
         <div class="card">
             <div class="card-header">
                 <span class="icon">&#128193;</span>
-                <h2>Mounted home directory</h2>
+                <h2>Mounted GLADE directories</h2>
             </div>
             <div class="pathbar">
                 <span class="cwd" id="cwd">&mdash;</span>

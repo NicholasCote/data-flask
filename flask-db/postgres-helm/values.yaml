@@ -33,3 +33,4 @@ db:
     size: 1Gi
 nfs:
   homePath: /gpfs/u/home/ncote
+  appsPath: /gpfs/u/apps

@@ -33,6 +33,11 @@ spec:
         nfs:
           server: gladenfs.hpc.ucar.edu
           path: {{ .Values.nfs.homePath }}
+      - name: apps
+        nfs:
+          server: gladenfs.hpc.ucar.edu
+          path: {{ .Values.nfs.appsPath }}
+          readOnly: true
       containers:
       - name: {{ .Values.webapp.name }}
         image: {{ .Values.webapp.container.image }}
@@ -44,7 +49,7 @@ spec:
         - containerPort: {{ .Values.webapp.container.port }}
         env:
         - name: BROWSE_ROOT
-          value: /home
+          value: /glade/u
         - name: DB_HOST
           value: {{ .Values.db.name }}.k8s.ucar.edu
         - name: DB_NAME
@@ -61,4 +66,7 @@ spec:
               key: password
         volumeMounts:
         - name: home
-          mountPath: /home
+          mountPath: /glade/u/home
+        - name: apps
+          mountPath: /glade/u/apps
+          readOnly: true

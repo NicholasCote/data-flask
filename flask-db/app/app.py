@@ -1,37 +1,136 @@
-from flask import Flask, request, jsonify
+import os
+from flask import Flask, request, jsonify, render_template, abort
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# TEMP: stripped down to a source-IP echo service while this app sits behind
-# traefik-external to test the mlc1 LoadBalancer fix. The NFS home browser
-# (/browse, /whoami) is removed so nothing from the home mount is exposed
-# publicly -- restore it from git history once the test is done.
-
 app = Flask(__name__)
-# Trust one X-Forwarded-For hop from traefik so the access log /
-# request.remote_addr reflect the client IP traefik forwards. The header
-# reaching the pod has a single entry, so x_for=1 is correct (x_for>1
-# overshoots to the raw TCP peer).
+# Trust one X-Forwarded-For hop from traefik-internal so the access log /
+# request.remote_addr reflect the client IP traefik forwards. NOTE: the real
+# client IP only arrives here once traefik-internal trusts its upstream
+# (forwardedHeaders.trustedIPs) and preserves the header; until then this
+# surfaces the internal proxy address. The header reaching the pod has a single
+# entry, so x_for=1 is correct (x_for>1 overshoots to the raw TCP peer).
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
+# Root of the NFS mounts inside the pod. The Rollout mounts GLADE home and apps
+# under /glade/u so they sit side by side, mirroring their real paths.
+# Everything the browser can see is confined to this directory -- see
+# safe_resolve() below. Set via the BROWSE_ROOT env in the Rollout.
+BROWSE_ROOT = os.environ.get('BROWSE_ROOT', '/glade/u')
 
-def ip_info():
-    return {
+
+def safe_resolve(rel_path):
+    """Resolve a user-supplied relative path against BROWSE_ROOT and refuse
+    anything that escapes it. Returns an absolute path guaranteed to be inside
+    BROWSE_ROOT, or raises ValueError.
+
+    realpath() resolves symlinks too, so a symlink inside the mount that points
+    out of it (e.g. into / or another export) also gets rejected -- important on
+    a real home dir where dotfile symlinks are common."""
+    root = os.path.realpath(BROWSE_ROOT)
+    # Treat the incoming path as relative regardless of leading slashes.
+    candidate = os.path.realpath(os.path.join(root, rel_path.lstrip('/')))
+    if candidate != root and not candidate.startswith(root + os.sep):
+        raise ValueError('path escapes browse root')
+    return candidate
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/debug/ip')
+def debug_ip():
+    # TEMP diagnostic: reveal the raw forwarded chain so we can determine the
+    # correct ProxyFix hop count (or whether the client IP reaches us at all).
+    return jsonify({
         'x_forwarded_for': request.headers.get('X-Forwarded-For'),
         'x_real_ip': request.headers.get('X-Real-IP'),
         'forwarded': request.headers.get('Forwarded'),
         'remote_addr': request.remote_addr,
         'access_route': list(request.access_route),
-    }
+    })
 
 
-@app.route('/')
-def index():
-    return jsonify(ip_info())
+@app.route('/whoami')
+def whoami():
+    """Report the process identity as seen inside the container. Pair this with
+    the uid/gid columns in /browse: if the pod runs as uid 41188 but files show
+    as 'nobody', that's an idmapd (Domain = ucar.edu) issue on the node, not a
+    securityContext one."""
+    try:
+        groups = os.getgroups()
+    except OSError:
+        groups = []
+    return jsonify({
+        'uid': os.getuid(),
+        'gid': os.getgid(),
+        'groups': groups,
+        'browse_root': BROWSE_ROOT,
+    })
 
 
-@app.route('/debug/ip')
-def debug_ip():
-    return jsonify(ip_info())
+@app.route('/browse')
+def browse():
+    rel = request.args.get('path', '')
+    try:
+        target = safe_resolve(rel)
+    except ValueError:
+        abort(403)
+
+    if not os.path.exists(target):
+        abort(404)
+    if not os.path.isdir(target):
+        abort(400, description='Not a directory')
+
+    entries = []
+    try:
+        with os.scandir(target) as it:
+            for e in it:
+                try:
+                    st = e.stat(follow_symlinks=False)
+                    entries.append({
+                        'name': e.name,
+                        'is_dir': e.is_dir(follow_symlinks=False),
+                        'is_link': e.is_symlink(),
+                        'size': st.st_size,
+                        'uid': st.st_uid,
+                        'gid': st.st_gid,
+                        'mode': oct(st.st_mode & 0o777),
+                    })
+                except OSError:
+                    # Entry we can't stat (permissions, broken symlink) -- list
+                    # the name so the UID/GID story is still visible, mark it
+                    # unreadable.
+                    entries.append({
+                        'name': e.name,
+                        'is_dir': False,
+                        'is_link': False,
+                        'size': None,
+                        'uid': None,
+                        'gid': None,
+                        'mode': None,
+                    })
+    except PermissionError:
+        abort(403, description='Permission denied reading directory')
+
+    entries.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+
+    # Relative path from root, for display and breadcrumb "up" navigation.
+    root = os.path.realpath(BROWSE_ROOT)
+    rel_display = '' if target == root else os.path.relpath(target, root)
+    parent = None
+    if target != root:
+        parent = os.path.relpath(os.path.dirname(target), root)
+        if parent == '.':
+            parent = ''
+
+    return jsonify({
+        'root': BROWSE_ROOT,
+        'path': rel_display,
+        'parent': parent,
+        'entries': entries,
+    })
 
 
 if __name__ == '__main__':
